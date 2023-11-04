@@ -24,10 +24,12 @@ test.describe.parallel('Theme page', () => {
       // Branding
       await page.getByRole('button', { name: 'Global' }).click()
       await expect(
-        page.locator('a:has-text("Made with Typebot")')
-      ).toHaveAttribute('href', 'https://www.typebot.io/?utm_source=litebadge')
+        page.locator('a:has-text("Made with WeDoWish")')
+      ).toHaveAttribute('href', 'https://wedowish.com/?utm_source=litebadge')
       await page.click('text="Show Typebot brand"')
-      await expect(page.locator('a:has-text("Made with Typebot")')).toBeHidden()
+      await expect(
+        page.locator('a:has-text("Made with WeDoWish")')
+      ).toBeHidden()
 
       // Font
       await page.getByRole('textbox').fill('Roboto Slab')
@@ -271,9 +273,7 @@ test.describe('Free workspace', () => {
     await page.goto(`/typebots/${typebotId}/theme`)
     await expect(page.locator('text="What\'s your name?"')).toBeVisible()
     await page.getByRole('button', { name: 'Global' }).click()
-    await expect(
-      page.locator('[data-testid="starter-lock-tag"]')
-    ).toBeVisible()
+    await expect(page.locator('[data-testid="starter-lock-tag"]')).toBeVisible()
     await page.click('text=Show Typebot brand')
     await expect(
       page.locator(

@@ -194,6 +194,6 @@ const applyElementStyleToDescendants = (
   })
 
 const convertMarkdownToRichText = (text: string): TDescendant[] => {
-  const plugins = [createDeserializeMdPlugin()]
+  const plugins: any = [createDeserializeMdPlugin()]
   return deserializeMd(createPlateEditor({ plugins }) as unknown as any, text)
 }
