@@ -24,11 +24,11 @@ test.describe.parallel('Theme page', () => {
       // Branding
       await page.getByRole('button', { name: 'Global' }).click()
       await expect(
-        page.locator('a:has-text("Made with WeDoWish")')
+        page.locator('a:has-text("Made with WeDoWish.com")')
       ).toHaveAttribute('href', 'https://wedowish.com/?utm_source=litebadge')
       await page.click('text="Show Typebot brand"')
       await expect(
-        page.locator('a:has-text("Made with WeDoWish")')
+        page.locator('a:has-text("Made with WeDoWish.com")')
       ).toBeHidden()
 
       // Font

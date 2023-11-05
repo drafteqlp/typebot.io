@@ -37,7 +37,7 @@ export const LiteBadge = () => {
       style={{ bottom: '20px' }}
       id="lite-badge"
     >
-      Made with <span className="text-blue-500">WeDoWish</span>.
+      Made with <span className="text-blue-500">WeDoWish.com</span>.
     </a>
   )
 }

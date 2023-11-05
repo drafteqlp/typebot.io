@@ -47,7 +47,7 @@ export const LiteBadge = (props: Props) => {
       id="lite-badge"
     >
       <TypebotLogo />
-      <span>Made with WeDoWish</span>
+      <span>Made with WeDoWish.com</span>
     </a>
   )
 }
