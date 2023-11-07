@@ -112,7 +112,7 @@ export const SignInForm = ({
       {!isMagicLinkSent && (
         <>
           <SocialLoginButtons providers={providers} />
-          {providers?.email && (
+          {false && providers?.email && (
             <>
               <DividerWithText mt="6">
                 {scopedT('orEmailLabel')}
