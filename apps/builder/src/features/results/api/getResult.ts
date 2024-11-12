@@ -1,30 +1,38 @@
-import prisma from '@typebot.io/lib/prisma'
-import { authenticatedProcedure } from '@/helpers/server/trpc'
-import { TRPCError } from '@trpc/server'
-import { ResultWithAnswers, resultWithAnswersSchema } from '@typebot.io/schemas'
-import { z } from 'zod'
-import { isReadTypebotForbidden } from '@/features/typebot/helpers/isReadTypebotForbidden'
+import { authenticatedProcedure } from "@/helpers/server/trpc";
+import { TRPCError } from "@trpc/server";
+import prisma from "@typebot.io/prisma";
+import { resultWithAnswersSchema } from "@typebot.io/results/schemas/results";
+import { isReadTypebotForbidden } from "@typebot.io/typebot/helpers/isReadTypebotForbidden";
+import { z } from "@typebot.io/zod";
 
 export const getResult = authenticatedProcedure
   .meta({
     openapi: {
-      method: 'GET',
-      path: '/typebots/{typebotId}/results/{resultId}',
+      method: "GET",
+      path: "/v1/typebots/{typebotId}/results/{resultId}",
       protect: true,
-      summary: 'Get result by id',
-      tags: ['Results'],
+      summary: "Get result by id",
+      tags: ["Results"],
     },
   })
   .input(
     z.object({
-      typebotId: z.string(),
-      resultId: z.string(),
-    })
+      typebotId: z
+        .string()
+        .describe(
+          "[Where to find my bot's ID?](../how-to#how-to-find-my-typebotid)",
+        ),
+      resultId: z
+        .string()
+        .describe(
+          "The `resultId` is returned by the /startChat endpoint or you can find it by listing results with `/results` endpoint",
+        ),
+    }),
   )
   .output(
     z.object({
       result: resultWithAnswersSchema,
-    })
+    }),
   )
   .query(async ({ input, ctx: { user } }) => {
     const typebot = await prisma.typebot.findUnique({
@@ -33,8 +41,18 @@ export const getResult = authenticatedProcedure
       },
       select: {
         id: true,
-        workspaceId: true,
         groups: true,
+        workspace: {
+          select: {
+            isSuspended: true,
+            isPastDue: true,
+            members: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
         collaborators: {
           select: {
             userId: true,
@@ -42,22 +60,46 @@ export const getResult = authenticatedProcedure
           },
         },
       },
-    })
+    });
     if (!typebot || (await isReadTypebotForbidden(typebot, user)))
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Typebot not found' })
-    const results = (await prisma.result.findMany({
+      throw new TRPCError({ code: "NOT_FOUND", message: "Typebot not found" });
+    const results = await prisma.result.findMany({
       where: {
         id: input.resultId,
         typebotId: typebot.id,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
-      include: { answers: true },
-    })) as ResultWithAnswers[]
+      include: {
+        answers: {
+          select: {
+            blockId: true,
+            content: true,
+            createdAt: true,
+          },
+        },
+        answersV2: {
+          select: {
+            blockId: true,
+            content: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
 
     if (results.length === 0)
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'Result not found' })
+      throw new TRPCError({ code: "NOT_FOUND", message: "Result not found" });
 
-    return { result: results[0] }
-  })
+    const { answers, answersV2, ...result } = results[0];
+
+    return {
+      result: resultWithAnswersSchema.parse({
+        ...result,
+        answers: answers
+          .concat(answersV2)
+          .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()),
+      }),
+    };
+  });

@@ -1,19 +1,19 @@
-import { DropdownList } from '@/components/DropdownList'
-import { TableList, TableListItemProps } from '@/components/TableList'
-import { Flex } from '@chakra-ui/react'
-import {
+import { DropdownList } from "@/components/DropdownList";
+import { TableList } from "@/components/TableList";
+import { Flex } from "@chakra-ui/react";
+import type {
   GoogleSheetsGetOptions,
-  LogicalOperator,
   RowsFilterComparison,
-} from '@typebot.io/schemas'
-import React, { useCallback } from 'react'
-import { RowsFilterComparisonItem } from './RowsFilterComparisonItem'
+} from "@typebot.io/blocks-integrations/googleSheets/schema";
+import { LogicalOperator } from "@typebot.io/conditions/constants";
+import React from "react";
+import { RowsFilterComparisonItem } from "./RowsFilterComparisonItem";
 
 type Props = {
-  filter: GoogleSheetsGetOptions['filter']
-  columns: string[]
-  onFilterChange: (filter: GoogleSheetsGetOptions['filter']) => void
-}
+  filter: GoogleSheetsGetOptions["filter"];
+  columns: string[];
+  onFilterChange: (filter: GoogleSheetsGetOptions["filter"]) => void;
+};
 
 export const RowsFilterTableList = ({
   filter,
@@ -25,23 +25,15 @@ export const RowsFilterTableList = ({
       ...filter,
       logicalOperator: filter?.logicalOperator ?? LogicalOperator.AND,
       comparisons,
-    })
+    });
 
   const updateLogicalOperator = (logicalOperator: LogicalOperator) =>
-    filter && onFilterChange({ ...filter, logicalOperator })
-
-  const createRowsFilterComparisonItem = useCallback(
-    (props: TableListItemProps<RowsFilterComparison>) => (
-      <RowsFilterComparisonItem {...props} columns={columns} />
-    ),
-    [columns]
-  )
+    filter && onFilterChange({ ...filter, logicalOperator });
 
   return (
     <TableList<RowsFilterComparison>
       initialItems={filter?.comparisons ?? []}
       onItemsChange={updateComparisons}
-      Item={createRowsFilterComparisonItem}
       ComponentBetweenItems={() => (
         <Flex justify="center">
           <DropdownList
@@ -52,6 +44,8 @@ export const RowsFilterTableList = ({
         </Flex>
       )}
       addLabel="Add filter rule"
-    />
-  )
-}
+    >
+      {(props) => <RowsFilterComparisonItem {...props} columns={columns} />}
+    </TableList>
+  );
+};

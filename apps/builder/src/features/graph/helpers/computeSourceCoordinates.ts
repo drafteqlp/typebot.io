@@ -1,10 +1,16 @@
-import { blockWidth } from '../constants'
-import { Coordinates } from '../types'
+import type { Coordinates } from "../types";
 
-export const computeSourceCoordinates = (
-  sourcePosition: Coordinates,
-  sourceTop: number
-) => ({
-  x: sourcePosition.x + blockWidth,
+type Props = {
+  sourcePosition: Coordinates;
+  sourceTop: number;
+  elementWidth: number;
+};
+
+export const computeSourceCoordinates = ({
+  sourcePosition,
+  sourceTop,
+  elementWidth,
+}: Props) => ({
+  x: sourcePosition.x + elementWidth,
   y: sourceTop,
-})
+});

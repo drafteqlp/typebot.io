@@ -1,32 +1,35 @@
-import { Alert, AlertIcon, Button, Link, Stack, Text } from '@chakra-ui/react'
-import { ExternalLinkIcon } from '@/components/icons'
-import { Webhook, WebhookOptions, ZapierBlock } from '@typebot.io/schemas'
-import React from 'react'
-import { WebhookAdvancedConfigForm } from '../../webhook/components/WebhookAdvancedConfigForm'
+import { ExternalLinkIcon } from "@/components/icons";
+import { Alert, AlertIcon, Button, Link, Stack, Text } from "@chakra-ui/react";
+import type {
+  HttpRequest,
+  HttpRequestBlock,
+} from "@typebot.io/blocks-integrations/httpRequest/schema";
+import type { ZapierBlock } from "@typebot.io/blocks-integrations/zapier/schema";
+import React from "react";
+import { HttpRequestAdvancedConfigForm } from "../../httpRequest/components/HttpRequestAdvancedConfigForm";
 
 type Props = {
-  block: ZapierBlock
-  onOptionsChange: (options: WebhookOptions) => void
-}
+  block: ZapierBlock;
+  onOptionsChange: (options: HttpRequestBlock["options"]) => void;
+};
 
 export const ZapierSettings = ({
   block: { id: blockId, options },
   onOptionsChange,
 }: Props) => {
-  const setLocalWebhook = async (newLocalWebhook: Webhook) => {
-    if (!options.webhook) return
+  const setLocalWebhook = async (newLocalWebhook: HttpRequest) => {
     onOptionsChange({
       ...options,
       webhook: newLocalWebhook,
-    })
-    return
-  }
+    });
+    return;
+  };
 
-  const url = options.webhook?.url
+  const url = options?.webhook?.url;
 
   return (
     <Stack spacing={4}>
-      <Alert status={url ? 'success' : 'info'} rounded="md">
+      <Alert status={url ? "success" : "info"} rounded="md">
         <AlertIcon />
         {url ? (
           <>Your zap is correctly configured 🚀</>
@@ -44,15 +47,13 @@ export const ZapierSettings = ({
           </Stack>
         )}
       </Alert>
-      {options.webhook && (
-        <WebhookAdvancedConfigForm
-          blockId={blockId}
-          webhook={options.webhook as Webhook}
-          options={options}
-          onWebhookChange={setLocalWebhook}
-          onOptionsChange={onOptionsChange}
-        />
-      )}
+      <HttpRequestAdvancedConfigForm
+        blockId={blockId}
+        httpRequest={options?.webhook}
+        options={options}
+        onHttpRequestChange={setLocalWebhook}
+        onOptionsChange={onOptionsChange}
+      />
     </Stack>
-  )
-}
+  );
+};

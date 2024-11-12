@@ -1,3 +1,4 @@
+import { useToast } from "@/hooks/useToast";
 import {
   Button,
   HStack,
@@ -11,55 +12,61 @@ import {
   Text,
   chakra,
   useColorModeValue,
-} from '@chakra-ui/react'
-import { Standard } from '@typebot.io/nextjs'
-import { Typebot } from '@typebot.io/schemas'
-import React, { useCallback, useEffect, useState } from 'react'
-import { templates } from '../data'
-import { TemplateProps } from '../types'
-import { useToast } from '@/hooks/useToast'
-import { sendRequest } from '@typebot.io/lib'
-import { useTranslate } from '@tolgee/react'
+} from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import { sendRequest } from "@typebot.io/lib/utils";
+import { Standard } from "@typebot.io/nextjs";
+import type { Typebot } from "@typebot.io/typebot/schemas/typebot";
+import React, { useCallback, useEffect, useState } from "react";
+import { useTemplates } from "../hooks/useTemplates";
+import type { TemplateProps } from "../types";
 
 type Props = {
-  isOpen: boolean
-  onClose: () => void
-  onTypebotChoose: (typebot: Typebot) => void
-}
+  isOpen: boolean;
+  onClose: () => void;
+  onTypebotChoose: (typebot: Typebot) => void;
+  isLoading: boolean;
+};
 
-export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
-  const { t } = useTranslate()
-  const templateCardBackgroundColor = useColorModeValue('white', 'gray.800')
-  const [typebot, setTypebot] = useState<Typebot>()
+export const TemplatesModal = ({
+  isOpen,
+  onClose,
+  onTypebotChoose,
+  isLoading,
+}: Props) => {
+  const { t } = useTranslate();
+  const templateCardBackgroundColor = useColorModeValue("white", "gray.800");
+  const [typebot, setTypebot] = useState<Typebot>();
+  const templates = useTemplates();
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateProps>(
-    templates[0]
-  )
-  const [isLoading, setIsLoading] = useState(false)
-
-  const { showToast } = useToast()
+    templates[0],
+  );
+  const [isFirstTemplateLoaded, setIsFirstTemplateLoaded] = useState(false);
+  const { showToast } = useToast();
 
   const fetchTemplate = useCallback(
     async (template: TemplateProps) => {
-      setSelectedTemplate(template)
+      setSelectedTemplate(template);
       const { data, error } = await sendRequest(
-        `/templates/${template.fileName}`
-      )
+        `/templates/${template.fileName}`,
+      );
       if (error)
-        return showToast({ title: error.name, description: error.message })
-      setTypebot(data as Typebot)
+        return showToast({ title: error.name, description: error.message });
+      setTypebot({ ...(data as Typebot), name: template.name });
     },
-    [showToast]
-  )
+    [showToast],
+  );
 
   useEffect(() => {
-    fetchTemplate(templates[0])
-  }, [fetchTemplate])
+    if (isFirstTemplateLoaded) return;
+    setIsFirstTemplateLoaded(true);
+    fetchTemplate(templates[0]);
+  }, [fetchTemplate, templates, isFirstTemplateLoaded]);
 
-  const onUseThisTemplateClick = () => {
-    if (!typebot) return
-    onTypebotChoose(typebot)
-    setIsLoading(true)
-  }
+  const onUseThisTemplateClick = async () => {
+    if (!typebot) return;
+    onTypebotChoose(typebot);
+  };
 
   return (
     <Modal
@@ -79,8 +86,7 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
             borderRightWidth={1}
             justify="space-between"
             flexShrink={0}
-            overflowY="scroll"
-            className="hide-scrollbar"
+            overflowY="auto"
           >
             <Stack spacing={5}>
               <Stack spacing={2}>
@@ -90,10 +96,10 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                   pl="1"
                   color="gray.500"
                 >
-                  {t('templates.modal.menuHeading.marketing')}
+                  {t("templates.modal.menuHeading.marketing")}
                 </Text>
                 {templates
-                  .filter((template) => template.category === 'marketing')
+                  .filter((template) => template.category === "marketing")
                   .map((template) => (
                     <Button
                       size="sm"
@@ -102,8 +108,8 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                       w="full"
                       variant={
                         selectedTemplate.name === template.name
-                          ? 'solid'
-                          : 'ghost'
+                          ? "solid"
+                          : "ghost"
                       }
                       isDisabled={template.isComingSoon}
                     >
@@ -112,7 +118,7 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                         <Text>{template.name}</Text>
                         {template.isNew && (
                           <Tag colorScheme="orange" size="sm" flexShrink={0}>
-                            {t('templates.modal.menuHeading.new.tag')}
+                            {t("templates.modal.menuHeading.new.tag")}
                           </Tag>
                         )}
                       </HStack>
@@ -126,10 +132,10 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                   pl="1"
                   color="gray.500"
                 >
-                  {t('templates.modal.menuHeading.product')}
+                  {t("templates.modal.menuHeading.product")}
                 </Text>
                 {templates
-                  .filter((template) => template.category === 'product')
+                  .filter((template) => template.category === "product")
                   .map((template) => (
                     <Button
                       size="sm"
@@ -138,8 +144,8 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                       w="full"
                       variant={
                         selectedTemplate.name === template.name
-                          ? 'solid'
-                          : 'ghost'
+                          ? "solid"
+                          : "ghost"
                       }
                       isDisabled={template.isComingSoon}
                     >
@@ -148,7 +154,7 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                         <Text>{template.name}</Text>
                         {template.isNew && (
                           <Tag colorScheme="orange" size="sm" flexShrink={0}>
-                            {t('templates.modal.menuHeading.new.tag')}
+                            {t("templates.modal.menuHeading.new.tag")}
                           </Tag>
                         )}
                       </HStack>
@@ -162,7 +168,7 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                   pl="1"
                   color="gray.500"
                 >
-                  {t('templates.modal.menuHeading.other')}
+                  {t("templates.modal.menuHeading.other")}
                 </Text>
                 {templates
                   .filter((template) => template.category === undefined)
@@ -174,8 +180,8 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                       w="full"
                       variant={
                         selectedTemplate.name === template.name
-                          ? 'solid'
-                          : 'ghost'
+                          ? "solid"
+                          : "ghost"
                       }
                       isDisabled={template.isComingSoon}
                     >
@@ -184,7 +190,7 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                         <Text>{template.name}</Text>
                         {template.isNew && (
                           <Tag colorScheme="orange" size="sm" flexShrink={0}>
-                            {t('templates.modal.menuHeading.new.tag')}
+                            {t("templates.modal.menuHeading.new.tag")}
                           </Tag>
                         )}
                       </HStack>
@@ -199,15 +205,15 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
             spacing="4"
             align="center"
             pb="4"
-            bgColor={selectedTemplate.backgroundColor ?? 'white'}
+            bgColor={selectedTemplate.backgroundColor ?? "white"}
           >
             {typebot && (
               <Standard
                 key={typebot.id}
                 typebot={typebot}
                 style={{
-                  borderRadius: '0.25rem',
-                  backgroundColor: '#fff',
+                  borderRadius: "0.25rem",
+                  backgroundColor: "#fff",
                 }}
               />
             )}
@@ -221,7 +227,7 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
             >
               <Stack flex="1" spacing={4}>
                 <Heading fontSize="2xl">
-                  {selectedTemplate.emoji}{' '}
+                  {selectedTemplate.emoji}{" "}
                   <chakra.span ml="2">{selectedTemplate.name}</chakra.span>
                 </Heading>
                 <Text>{selectedTemplate.description}</Text>
@@ -231,12 +237,12 @@ export const TemplatesModal = ({ isOpen, onClose, onTypebotChoose }: Props) => {
                 onClick={onUseThisTemplateClick}
                 isLoading={isLoading}
               >
-                {t('templates.modal.useTemplateButton.label')}
+                {t("templates.modal.useTemplateButton.label")}
               </Button>
             </HStack>
           </Stack>
         </ModalBody>
       </ModalContent>
     </Modal>
-  )
-}
+  );
+};

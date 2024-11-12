@@ -1,104 +1,123 @@
+import { MoreInfoTooltip } from "@/components/MoreInfoTooltip";
+import { TextLink } from "@/components/TextLink";
+import { TextInput } from "@/components/inputs";
+import { useUser } from "@/features/account/hooks/useUser";
+import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
+import { useToast } from "@/hooks/useToast";
+import { trpc } from "@/lib/trpc";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  ModalFooter,
   Button,
   FormControl,
   FormLabel,
+  HStack,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Stack,
   Text,
-  HStack,
-} from '@chakra-ui/react'
-import React, { useState } from 'react'
-import { useWorkspace } from '@/features/workspace/WorkspaceProvider'
-import { useToast } from '@/hooks/useToast'
-import { TextInput } from '@/components/inputs'
-import { MoreInfoTooltip } from '@/components/MoreInfoTooltip'
-import { TextLink } from '@/components/TextLink'
-import { StripeCredentials } from '@typebot.io/schemas'
-import { trpc } from '@/lib/trpc'
-import { isNotEmpty } from '@typebot.io/lib'
-import { useUser } from '@/features/account/hooks/useUser'
+} from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import type { StripeCredentials } from "@typebot.io/blocks-inputs/payment/schema";
+import { isNotEmpty } from "@typebot.io/lib/utils";
+import type React from "react";
+import { useState } from "react";
 
 type Props = {
-  isOpen: boolean
-  onClose: () => void
-  onNewCredentials: (id: string) => void
-}
+  isOpen: boolean;
+  onClose: () => void;
+  onNewCredentials: (id: string) => void;
+};
 
 export const StripeConfigModal = ({
   isOpen,
   onNewCredentials,
   onClose,
 }: Props) => {
-  const { user } = useUser()
-  const { workspace } = useWorkspace()
-  const [isCreating, setIsCreating] = useState(false)
-  const { showToast } = useToast()
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <ModalOverlay />
+      <StripeCreateModalContent
+        onNewCredentials={onNewCredentials}
+        onClose={onClose}
+      />
+    </Modal>
+  );
+};
+
+export const StripeCreateModalContent = ({
+  onNewCredentials,
+  onClose,
+}: Pick<Props, "onClose" | "onNewCredentials">) => {
+  const { t } = useTranslate();
+  const { user } = useUser();
+  const { workspace } = useWorkspace();
+  const [isCreating, setIsCreating] = useState(false);
+  const { showToast } = useToast();
   const [stripeConfig, setStripeConfig] = useState<
-    StripeCredentials['data'] & { name: string }
+    StripeCredentials["data"] & { name: string }
   >({
-    name: '',
-    live: { publicKey: '', secretKey: '' },
-    test: { publicKey: '', secretKey: '' },
-  })
+    name: "",
+    live: { publicKey: "", secretKey: "" },
+    test: { publicKey: "", secretKey: "" },
+  });
   const {
     credentials: {
       listCredentials: { refetch: refetchCredentials },
     },
-  } = trpc.useContext()
+  } = trpc.useContext();
   const { mutate } = trpc.credentials.createCredentials.useMutation({
     onMutate: () => setIsCreating(true),
     onSettled: () => setIsCreating(false),
     onError: (err) => {
       showToast({
         description: err.message,
-        status: 'error',
-      })
+        status: "error",
+      });
     },
     onSuccess: (data) => {
-      refetchCredentials()
-      onNewCredentials(data.credentialsId)
-      onClose()
+      refetchCredentials();
+      onNewCredentials(data.credentialsId);
+      onClose();
     },
-  })
+  });
 
   const handleNameChange = (name: string) =>
     setStripeConfig({
       ...stripeConfig,
       name,
-    })
+    });
 
   const handlePublicKeyChange = (publicKey: string) =>
     setStripeConfig({
       ...stripeConfig,
       live: { ...stripeConfig.live, publicKey },
-    })
+    });
 
   const handleSecretKeyChange = (secretKey: string) =>
     setStripeConfig({
       ...stripeConfig,
       live: { ...stripeConfig.live, secretKey },
-    })
+    });
 
   const handleTestPublicKeyChange = (publicKey: string) =>
     setStripeConfig({
       ...stripeConfig,
       test: { ...stripeConfig.test, publicKey },
-    })
+    });
 
   const handleTestSecretKeyChange = (secretKey: string) =>
     setStripeConfig({
       ...stripeConfig,
       test: { ...stripeConfig.test, secretKey },
-    })
+    });
 
-  const createCredentials = async () => {
-    if (!user?.email || !workspace?.id) return
+  const createCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.email || !workspace?.id) return;
     mutate({
       credentials: {
         data: {
@@ -113,22 +132,26 @@ export const StripeConfigModal = ({
           },
         },
         name: stripeConfig.name,
-        type: 'stripe',
+        type: "stripe",
         workspaceId: workspace.id,
       },
-    })
-  }
+    });
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Connect Stripe account</ModalHeader>
-        <ModalCloseButton />
+    <ModalContent>
+      <ModalHeader>
+        {t("blocks.inputs.payment.settings.stripeConfig.title.label")}
+      </ModalHeader>
+      <ModalCloseButton />
+      <form onSubmit={createCredentials}>
         <ModalBody>
-          <Stack as="form" spacing={4}>
+          <Stack spacing={4}>
             <TextInput
               isRequired
-              label="Account name:"
+              label={t(
+                "blocks.inputs.payment.settings.stripeConfig.accountName.label",
+              )}
               onChange={handleNameChange}
               placeholder="Typebot"
               withVariableButton={false}
@@ -136,9 +159,13 @@ export const StripeConfigModal = ({
             />
             <Stack>
               <FormLabel>
-                Test keys:{' '}
+                {t(
+                  "blocks.inputs.payment.settings.stripeConfig.testKeys.label",
+                )}{" "}
                 <MoreInfoTooltip>
-                  Will be used when previewing the bot.
+                  {t(
+                    "blocks.inputs.payment.settings.stripeConfig.testKeys.infoText.label",
+                  )}
                 </MoreInfoTooltip>
               </FormLabel>
               <HStack>
@@ -153,11 +180,16 @@ export const StripeConfigModal = ({
                   placeholder="sk_test_..."
                   withVariableButton={false}
                   debounceTimeout={0}
+                  type="password"
                 />
               </HStack>
             </Stack>
             <Stack>
-              <FormLabel>Live keys:</FormLabel>
+              <FormLabel>
+                {t(
+                  "blocks.inputs.payment.settings.stripeConfig.liveKeys.label",
+                )}
+              </FormLabel>
               <HStack>
                 <FormControl>
                   <TextInput
@@ -173,15 +205,18 @@ export const StripeConfigModal = ({
                     placeholder="sk_live_..."
                     withVariableButton={false}
                     debounceTimeout={0}
+                    type="password"
                   />
                 </FormControl>
               </HStack>
             </Stack>
 
             <Text>
-              (You can find your keys{' '}
+              ({t("blocks.inputs.payment.settings.stripeConfig.findKeys.label")}{" "}
               <TextLink href="https://dashboard.stripe.com/apikeys" isExternal>
-                here
+                {t(
+                  "blocks.inputs.payment.settings.stripeConfig.findKeys.here.label",
+                )}
               </TextLink>
               )
             </Text>
@@ -190,19 +225,19 @@ export const StripeConfigModal = ({
 
         <ModalFooter>
           <Button
+            type="submit"
             colorScheme="blue"
-            onClick={createCredentials}
             isDisabled={
-              stripeConfig.live.publicKey === '' ||
-              stripeConfig.name === '' ||
-              stripeConfig.live.secretKey === ''
+              stripeConfig.live.publicKey === "" ||
+              stripeConfig.name === "" ||
+              stripeConfig.live.secretKey === ""
             }
             isLoading={isCreating}
           >
-            Connect
+            {t("connect")}
           </Button>
         </ModalFooter>
-      </ModalContent>
-    </Modal>
-  )
-}
+      </form>
+    </ModalContent>
+  );
+};

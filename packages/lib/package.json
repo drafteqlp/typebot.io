@@ -1,33 +1,23 @@
 {
   "name": "@typebot.io/lib",
-  "version": "1.0.0",
-  "license": "AGPL-3.0-or-later",
+  "version": "0.0.1",
   "private": true,
-  "main": "./index.ts",
-  "types": "./index.ts",
-  "devDependencies": {
-    "@paralleldrive/cuid2": "2.2.1",
-    "@playwright/test": "1.36.0",
-    "@typebot.io/env": "workspace:*",
-    "@typebot.io/prisma": "workspace:*",
-    "@typebot.io/schemas": "workspace:*",
-    "@typebot.io/tsconfig": "workspace:*",
-    "@types/nodemailer": "6.4.8",
-    "next": "13.5.4",
-    "nodemailer": "6.9.3",
-    "typescript": "5.1.6"
-  },
-  "peerDependencies": {
-    "next": "13.0.0",
-    "nodemailer": "6.7.8"
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@sentry/nextjs": "7.73.0",
-    "@trpc/server": "10.40.0",
-    "@udecode/plate-common": "^21.1.5",
-    "got": "12.6.0",
+    "google-auth-library": "8.9.0",
+    "ioredis": "5.4.1",
     "minio": "7.1.3",
-    "remark-slate": "^1.8.6",
-    "stripe": "12.13.0"
+    "validator": "13.11.0",
+    "@paralleldrive/cuid2": "2.2.1",
+    "next": "14.2.13"
+  },
+  "devDependencies": {
+    "@typebot.io/env": "workspace:*",
+    "@typebot.io/prisma": "workspace:*",
+    "@typebot.io/tsconfig": "workspace:*",
+    "@types/validator": "13.11.9"
   }
 }

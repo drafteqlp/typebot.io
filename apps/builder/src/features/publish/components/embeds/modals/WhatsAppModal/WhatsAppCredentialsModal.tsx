@@ -1,88 +1,102 @@
-import { CopyButton } from '@/components/CopyButton'
-import { TextLink } from '@/components/TextLink'
-import { ChevronLeftIcon, ExternalLinkIcon } from '@/components/icons'
-import { TextInput } from '@/components/inputs/TextInput'
-import { useWorkspace } from '@/features/workspace/WorkspaceProvider'
-import { useToast } from '@/hooks/useToast'
-import { trpc, trpcVanilla } from '@/lib/trpc'
+import { CopyButton } from "@/components/CopyButton";
+import { TextLink } from "@/components/TextLink";
+import { ChevronLeftIcon, ExternalLinkIcon } from "@/components/icons";
+import { TextInput } from "@/components/inputs/TextInput";
+import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
+import { useToast } from "@/hooks/useToast";
+import { trpc, trpcVanilla } from "@/lib/trpc";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalCloseButton,
-  ModalBody,
-  Stack,
-  ModalFooter,
-  Stepper,
-  useSteps,
-  Step,
-  StepIndicator,
   Box,
+  Button,
+  Code,
+  HStack,
+  Heading,
+  IconButton,
+  Image,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Link,
+  ListItem,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  OrderedList,
+  Stack,
+  Step,
   StepIcon,
+  StepIndicator,
   StepNumber,
   StepSeparator,
   StepStatus,
   StepTitle,
-  UnorderedList,
-  ListItem,
+  Stepper,
   Text,
-  Image,
-  Button,
-  HStack,
-  IconButton,
-  Heading,
-  OrderedList,
-  Link,
-  Code,
-  Input,
-  InputGroup,
-  InputRightElement,
-} from '@chakra-ui/react'
-import { env } from '@typebot.io/env'
-import { isEmpty, isNotEmpty } from '@typebot.io/lib/utils'
-import { getViewerUrl } from '@typebot.io/lib/getViewerUrl'
-import React, { useState } from 'react'
-import { createId } from '@paralleldrive/cuid2'
+  UnorderedList,
+  useSteps,
+} from "@chakra-ui/react";
+import { createId } from "@paralleldrive/cuid2";
+import { env } from "@typebot.io/env";
+import { isEmpty, isNotEmpty } from "@typebot.io/lib/utils";
+import React, { useState } from "react";
 
 const steps = [
-  { title: 'Requirements' },
-  { title: 'User Token' },
-  { title: 'Phone Number' },
-  { title: 'Webhook' },
-]
+  { title: "Requirements" },
+  { title: "User Token" },
+  { title: "Phone Number" },
+  { title: "Webhook" },
+];
 
 type Props = {
-  isOpen: boolean
-  onClose: () => void
-  onNewCredentials: (id: string) => void
-}
+  isOpen: boolean;
+  onClose: () => void;
+  onNewCredentials: (id: string) => void;
+};
 
-const credentialsId = createId()
+const credentialsId = createId();
 
 export const WhatsAppCredentialsModal = ({
   isOpen,
   onClose,
   onNewCredentials,
 }: Props) => {
-  const { workspace } = useWorkspace()
-  const { showToast } = useToast()
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
+      <ModalOverlay />
+      <WhatsAppCreateModalContent
+        onNewCredentials={onNewCredentials}
+        onClose={onClose}
+      />
+    </Modal>
+  );
+};
+
+export const WhatsAppCreateModalContent = ({
+  onNewCredentials,
+  onClose,
+}: Pick<Props, "onNewCredentials" | "onClose">) => {
+  const { workspace } = useWorkspace();
+  const { showToast } = useToast();
   const { activeStep, goToNext, goToPrevious, setActiveStep } = useSteps({
     index: 0,
     count: steps.length,
-  })
-  const [systemUserAccessToken, setSystemUserAccessToken] = useState('')
-  const [phoneNumberId, setPhoneNumberId] = useState('')
-  const [phoneNumberName, setPhoneNumberName] = useState('')
-  const [verificationToken, setVerificationToken] = useState('')
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [isCreating, setIsCreating] = useState(false)
+  });
+  const [systemUserAccessToken, setSystemUserAccessToken] = useState("");
+  const [phoneNumberId, setPhoneNumberId] = useState("");
+  const [phoneNumberName, setPhoneNumberName] = useState("");
+  const [verificationToken, setVerificationToken] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   const {
     credentials: {
       listCredentials: { refetch: refetchCredentials },
     },
-  } = trpc.useContext()
+  } = trpc.useContext();
 
   const { mutate } = trpc.credentials.createCredentials.useMutation({
     onMutate: () => setIsCreating(true),
@@ -90,36 +104,37 @@ export const WhatsAppCredentialsModal = ({
     onError: (err) => {
       showToast({
         description: err.message,
-        status: 'error',
-      })
+        status: "error",
+      });
     },
     onSuccess: (data) => {
-      refetchCredentials()
-      onNewCredentials(data.credentialsId)
-      onClose()
-      resetForm()
+      refetchCredentials();
+      onNewCredentials(data.credentialsId);
+      onClose();
+      resetForm();
     },
-  })
+  });
 
-  const { data: tokenInfoData } = trpc.whatsApp.getSystemTokenInfo.useQuery(
-    {
-      token: systemUserAccessToken,
-    },
-    { enabled: isNotEmpty(systemUserAccessToken) }
-  )
+  const { data: tokenInfoData } =
+    trpc.whatsAppInternal.getSystemTokenInfo.useQuery(
+      {
+        token: systemUserAccessToken,
+      },
+      { enabled: isNotEmpty(systemUserAccessToken) },
+    );
 
   const resetForm = () => {
-    setActiveStep(0)
-    setSystemUserAccessToken('')
-    setPhoneNumberId('')
-  }
+    setActiveStep(0);
+    setSystemUserAccessToken("");
+    setPhoneNumberId("");
+  };
 
   const createMetaCredentials = async () => {
-    if (!workspace) return
+    if (!workspace) return;
     mutate({
       credentials: {
         id: credentialsId,
-        type: 'whatsApp',
+        type: "whatsApp",
         workspaceId: workspace.id,
         name: phoneNumberName,
         data: {
@@ -127,180 +142,186 @@ export const WhatsAppCredentialsModal = ({
           phoneNumberId,
         },
       },
-    })
-  }
+    });
+  };
 
   const isTokenValid = async () => {
-    setIsVerifying(true)
+    setIsVerifying(true);
     try {
       const { expiresAt, scopes } =
-        await trpcVanilla.whatsApp.getSystemTokenInfo.query({
+        await trpcVanilla.whatsAppInternal.getSystemTokenInfo.query({
           token: systemUserAccessToken,
-        })
+        });
       if (expiresAt !== 0) {
         showToast({
           description:
-            'Token expiration was not set to *never*. Create the token again with the correct expiration.',
-        })
-        return false
+            "Token expiration was not set to *never*. Create the token again with the correct expiration.",
+        });
+        return false;
       }
       if (
-        ['whatsapp_business_management', 'whatsapp_business_messaging'].find(
-          (scope) => !scopes.includes(scope)
+        ["whatsapp_business_management", "whatsapp_business_messaging"].find(
+          (scope) => !scopes.includes(scope),
         )
       ) {
         showToast({
-          description: 'Token does not have all the necessary scopes',
-        })
-        return false
+          description: "Token does not have all the necessary scopes",
+        });
+        return false;
       }
     } catch (err) {
-      setIsVerifying(false)
+      setIsVerifying(false);
       showToast({
-        description: 'Could not get system info',
-      })
-      return false
+        description: "Could not get system info",
+        details:
+          err instanceof Error
+            ? { content: err.message, lang: "json" }
+            : undefined,
+      });
+      return false;
     }
-    setIsVerifying(false)
-    return true
-  }
+    setIsVerifying(false);
+    return true;
+  };
 
   const isPhoneNumberAvailable = async () => {
-    setIsVerifying(true)
+    setIsVerifying(true);
     try {
-      const { name } = await trpcVanilla.whatsApp.getPhoneNumber.query({
+      const { name } = await trpcVanilla.whatsAppInternal.getPhoneNumber.query({
         systemToken: systemUserAccessToken,
         phoneNumberId,
-      })
-      setPhoneNumberName(name)
+      });
+      setPhoneNumberName(name);
       try {
         const { message } =
-          await trpcVanilla.whatsApp.verifyIfPhoneNumberAvailable.query({
-            phoneNumberDisplayName: name,
-          })
+          await trpcVanilla.whatsAppInternal.verifyIfPhoneNumberAvailable.query(
+            {
+              phoneNumberDisplayName: name,
+            },
+          );
 
-        if (message === 'taken') {
-          setIsVerifying(false)
+        if (message === "taken") {
+          setIsVerifying(false);
           showToast({
-            description: 'Phone number is already registered on Typebot',
-          })
-          return false
+            description: "Phone number is already registered on Typebot",
+          });
+          return false;
         }
         const { verificationToken } =
-          await trpcVanilla.whatsApp.generateVerificationToken.mutate()
-        setVerificationToken(verificationToken)
+          await trpcVanilla.whatsAppInternal.generateVerificationToken.mutate();
+        setVerificationToken(verificationToken);
       } catch (err) {
-        console.error(err)
-        setIsVerifying(false)
+        console.error(err);
+        setIsVerifying(false);
         showToast({
-          description: 'Could not verify if phone number is available',
-        })
-        return false
+          description: "Could not verify if phone number is available",
+        });
+        return false;
       }
     } catch (err) {
-      console.error(err)
-      setIsVerifying(false)
+      console.error(err);
+      setIsVerifying(false);
       showToast({
-        description: 'Could not get phone number info',
-      })
-      return false
+        description: "Could not get phone number info",
+        details:
+          err instanceof Error
+            ? { content: err.message, lang: "json" }
+            : undefined,
+      });
+      return false;
     }
-    setIsVerifying(false)
-    return true
-  }
+    setIsVerifying(false);
+    return true;
+  };
 
   const goToNextStep = async () => {
-    if (activeStep === steps.length - 1) return createMetaCredentials()
-    if (activeStep === 1 && !(await isTokenValid())) return
-    if (activeStep === 2 && !(await isPhoneNumberAvailable())) return
+    if (activeStep === steps.length - 1) return createMetaCredentials();
+    if (activeStep === 1 && !(await isTokenValid())) return;
+    if (activeStep === 2 && !(await isPhoneNumberAvailable())) return;
 
-    goToNext()
-  }
-
+    goToNext();
+  };
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="3xl">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          <HStack h="40px">
-            {activeStep > 0 && (
-              <IconButton
-                icon={<ChevronLeftIcon />}
-                aria-label={'Go back'}
-                variant="ghost"
-                onClick={goToPrevious}
-              />
-            )}
-            <Heading size="md">Add a WhatsApp phone number</Heading>
-          </HStack>
-        </ModalHeader>
-        <ModalCloseButton />
-        <ModalBody as={Stack} spacing="10">
-          <Stepper index={activeStep} size="sm" pt="4">
-            {steps.map((step, index) => (
-              <Step key={index}>
-                <StepIndicator>
-                  <StepStatus
-                    complete={<StepIcon />}
-                    incomplete={<StepNumber />}
-                    active={<StepNumber />}
-                  />
-                </StepIndicator>
+    <ModalContent>
+      <ModalHeader>
+        <HStack h="40px">
+          {activeStep > 0 && (
+            <IconButton
+              icon={<ChevronLeftIcon />}
+              aria-label={"Go back"}
+              variant="ghost"
+              onClick={goToPrevious}
+            />
+          )}
+          <Heading size="md">Add a WhatsApp phone number</Heading>
+        </HStack>
+      </ModalHeader>
+      <ModalCloseButton />
+      <ModalBody as={Stack} spacing="10">
+        <Stepper index={activeStep} size="sm" pt="4">
+          {steps.map((step, index) => (
+            <Step key={index}>
+              <StepIndicator>
+                <StepStatus
+                  complete={<StepIcon />}
+                  incomplete={<StepNumber />}
+                  active={<StepNumber />}
+                />
+              </StepIndicator>
 
-                <Box flexShrink="0">
-                  <StepTitle>{step.title}</StepTitle>
-                </Box>
+              <Box flexShrink="0">
+                <StepTitle>{step.title}</StepTitle>
+              </Box>
 
-                <StepSeparator />
-              </Step>
-            ))}
-          </Stepper>
-          {activeStep === 0 && <Requirements />}
-          {activeStep === 1 && (
-            <SystemUserToken
-              initialToken={systemUserAccessToken}
-              setToken={setSystemUserAccessToken}
-            />
-          )}
-          {activeStep === 2 && (
-            <PhoneNumber
-              appId={tokenInfoData?.appId}
-              initialPhoneNumberId={phoneNumberId}
-              setPhoneNumberId={setPhoneNumberId}
-            />
-          )}
-          {activeStep === 3 && (
-            <Webhook
-              appId={tokenInfoData?.appId}
-              verificationToken={verificationToken}
-              credentialsId={credentialsId}
-            />
-          )}
-        </ModalBody>
-        <ModalFooter>
-          <Button
-            onClick={goToNextStep}
-            colorScheme="blue"
-            isDisabled={
-              (activeStep === 1 && isEmpty(systemUserAccessToken)) ||
-              (activeStep === 2 && isEmpty(phoneNumberId))
-            }
-            isLoading={isVerifying || isCreating}
-          >
-            {activeStep === steps.length - 1 ? 'Submit' : 'Continue'}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
-  )
-}
+              <StepSeparator />
+            </Step>
+          ))}
+        </Stepper>
+        {activeStep === 0 && <Requirements />}
+        {activeStep === 1 && (
+          <SystemUserToken
+            initialToken={systemUserAccessToken}
+            setToken={setSystemUserAccessToken}
+          />
+        )}
+        {activeStep === 2 && (
+          <PhoneNumber
+            appId={tokenInfoData?.appId}
+            initialPhoneNumberId={phoneNumberId}
+            setPhoneNumberId={setPhoneNumberId}
+          />
+        )}
+        {activeStep === 3 && (
+          <Webhook
+            appId={tokenInfoData?.appId}
+            verificationToken={verificationToken}
+            credentialsId={credentialsId}
+          />
+        )}
+      </ModalBody>
+      <ModalFooter>
+        <Button
+          onClick={goToNextStep}
+          colorScheme="blue"
+          isDisabled={
+            (activeStep === 1 && isEmpty(systemUserAccessToken)) ||
+            (activeStep === 2 && isEmpty(phoneNumberId))
+          }
+          isLoading={isVerifying || isCreating}
+        >
+          {activeStep === steps.length - 1 ? "Submit" : "Continue"}
+        </Button>
+      </ModalFooter>
+    </ModalContent>
+  );
+};
 
 const Requirements = () => (
   <Stack spacing={4}>
     <Text>
-      Make sure you have{' '}
+      Make sure you have{" "}
       <TextLink
-        href="https://docs.typebot.io/embed/whatsapp/create-meta-app"
+        href="https://docs.typebot.io/deploy/whatsapp/create-meta-app"
         isExternal
       >
         created a WhatsApp Meta app
@@ -313,18 +334,18 @@ const Requirements = () => (
       rounded="md"
     />
   </Stack>
-)
+);
 
 const SystemUserToken = ({
   initialToken,
   setToken,
 }: {
-  initialToken: string
-  setToken: (id: string) => void
+  initialToken: string;
+  setToken: (id: string) => void;
 }) => (
   <OrderedList spacing={4}>
     <ListItem>
-      Go to your{' '}
+      Go to your{" "}
       <Button
         as={Link}
         href="https://business.facebook.com/settings/system-users"
@@ -345,7 +366,7 @@ const SystemUserToken = ({
       <Stack>
         <Text>
           Click on <Code>Add assets</Code>. Under <Code>Apps</Code>, look for
-          your previously created app, select it and check{' '}
+          your previously created app, select it and check{" "}
           <Code>Manage app</Code>
         </Text>
         <Image
@@ -365,8 +386,8 @@ const SystemUserToken = ({
             Token expiration: <Code>Never</Code>
           </ListItem>
           <ListItem>
-            Available Permissions: <Code>whatsapp_business_messaging</Code>,{' '}
-            <Code>whatsapp_business_management</Code>{' '}
+            Available Permissions: <Code>whatsapp_business_messaging</Code>,{" "}
+            <Code>whatsapp_business_management</Code>{" "}
           </ListItem>
         </UnorderedList>
       </Stack>
@@ -374,6 +395,7 @@ const SystemUserToken = ({
     <ListItem>Copy and paste the generated token:</ListItem>
     <TextInput
       isRequired
+      type="password"
       label="System User Token"
       defaultValue={initialToken}
       onChange={(val) => setToken(val.trim())}
@@ -381,22 +403,22 @@ const SystemUserToken = ({
       debounceTimeout={0}
     />
   </OrderedList>
-)
+);
 
 const PhoneNumber = ({
   appId,
   initialPhoneNumberId,
   setPhoneNumberId,
 }: {
-  appId?: string
-  initialPhoneNumberId: string
-  setPhoneNumberId: (id: string) => void
+  appId?: string;
+  initialPhoneNumberId: string;
+  setPhoneNumberId: (id: string) => void;
 }) => (
   <OrderedList spacing={4}>
     <ListItem>
       <HStack>
         <Text>
-          Go to your{' '}
+          Go to your{" "}
           <Button
             as={Link}
             href={`https://developers.facebook.com/apps/${appId}/whatsapp-business/wa-dev-console`}
@@ -404,21 +426,20 @@ const PhoneNumber = ({
             rightIcon={<ExternalLinkIcon />}
             size="sm"
           >
-            WhatsApp Dev Console{' '}
+            WhatsApp Dev Console{" "}
           </Button>
         </Text>
       </HStack>
     </ListItem>
     <ListItem>
-      Add your phone number by clicking on the <Code>Add phone number</Code>{' '}
+      Add your phone number by clicking on the <Code>Add phone number</Code>{" "}
       button.
     </ListItem>
     <ListItem>
       <Stack>
         <Text>
-          Select a phone number and paste the associated{' '}
-          <Code>Phone number ID</Code> and{' '}
-          <Code>WhatsApp Business Account ID</Code>:
+          Select a phone number and paste the associated{" "}
+          <Code>Phone number ID</Code>
         </Text>
         <HStack>
           <TextInput
@@ -437,26 +458,26 @@ const PhoneNumber = ({
       </Stack>
     </ListItem>
   </OrderedList>
-)
+);
 
 const Webhook = ({
   appId,
   verificationToken,
   credentialsId,
 }: {
-  appId?: string
-  verificationToken: string
-  credentialsId: string
+  appId?: string;
+  verificationToken: string;
+  credentialsId: string;
 }) => {
-  const { workspace } = useWorkspace()
+  const { workspace } = useWorkspace();
   const webhookUrl = `${
-    env.NEXT_PUBLIC_VIEWER_INTERNAL_URL ?? getViewerUrl()
-  }/api/v1/workspaces/${workspace?.id}/whatsapp/${credentialsId}/webhook`
+    env.NEXT_PUBLIC_VIEWER_URL.at(1) ?? env.NEXT_PUBLIC_VIEWER_URL[0]
+  }/api/v1/workspaces/${workspace?.id}/whatsapp/${credentialsId}/webhook`;
 
   return (
     <Stack spacing={6}>
       <Text>
-        In your{' '}
+        In your{" "}
         <Button
           as={Link}
           href={`https://developers.facebook.com/apps/${appId}/whatsapp-business/wa-settings`}
@@ -473,7 +494,7 @@ const Webhook = ({
           <HStack>
             <Text flexShrink={0}>Callback URL:</Text>
             <InputGroup size="sm">
-              <Input type={'text'} defaultValue={webhookUrl} />
+              <Input type={"text"} defaultValue={webhookUrl} />
               <InputRightElement width="60px">
                 <CopyButton size="sm" textToCopy={webhookUrl} />
               </InputRightElement>
@@ -484,7 +505,7 @@ const Webhook = ({
           <HStack>
             <Text flexShrink={0}>Verify Token:</Text>
             <InputGroup size="sm">
-              <Input type={'text'} defaultValue={verificationToken} />
+              <Input type={"text"} defaultValue={verificationToken} />
               <InputRightElement width="60px">
                 <CopyButton size="sm" textToCopy={verificationToken} />
               </InputRightElement>
@@ -494,11 +515,12 @@ const Webhook = ({
         <ListItem>
           <HStack>
             <Text flexShrink={0}>
-              Webhook fields: check <Code>messages</Code>
+              Webhook fields: Next to <Code>messages</Code>, click on
+              "Subscribe"
             </Text>
           </HStack>
         </ListItem>
       </UnorderedList>
     </Stack>
-  )
-}
+  );
+};

@@ -1,38 +1,52 @@
-import prisma from '@typebot.io/lib/prisma'
-import { authenticatedProcedure } from '@/helpers/server/trpc'
-import { TRPCError } from '@trpc/server'
-import { LogicBlockType, typebotSchema } from '@typebot.io/schemas'
-import { z } from 'zod'
-import { isReadTypebotForbidden } from '@/features/typebot/helpers/isReadTypebotForbidden'
-import { isDefined } from '@typebot.io/lib'
+import { authenticatedProcedure } from "@/helpers/server/trpc";
+import { TRPCError } from "@trpc/server";
+import { LogicBlockType } from "@typebot.io/blocks-logic/constants";
+import { parseGroups } from "@typebot.io/groups/schemas";
+import { isDefined } from "@typebot.io/lib/utils";
+import prisma from "@typebot.io/prisma";
+import { isReadTypebotForbidden } from "@typebot.io/typebot/helpers/isReadTypebotForbidden";
+import { preprocessTypebot } from "@typebot.io/typebot/preprocessTypebot";
+import {
+  typebotV5Schema,
+  typebotV6Schema,
+} from "@typebot.io/typebot/schemas/typebot";
+import { z } from "@typebot.io/zod";
+
+const pick = {
+  version: true,
+  groups: true,
+  variables: true,
+  name: true,
+} as const;
+
+const output = z.object({
+  typebots: z.array(
+    z.preprocess(
+      preprocessTypebot,
+      z.discriminatedUnion("version", [
+        typebotV5Schema.pick(pick),
+        typebotV6Schema.pick(pick),
+      ]),
+    ),
+  ),
+});
 
 export const getLinkedTypebots = authenticatedProcedure
   .meta({
     openapi: {
-      method: 'GET',
-      path: '/typebots/{typebotId}/linkedTypebots',
+      method: "GET",
+      path: "/v1/typebots/{typebotId}/linkedTypebots",
       protect: true,
-      summary: 'Get linked typebots',
-      tags: ['Typebot'],
+      summary: "Get linked typebots",
+      tags: ["Typebot"],
     },
   })
   .input(
     z.object({
       typebotId: z.string(),
-    })
+    }),
   )
-  .output(
-    z.object({
-      typebots: z.array(
-        typebotSchema._def.schema.pick({
-          id: true,
-          groups: true,
-          variables: true,
-          name: true,
-        })
-      ),
-    })
-  )
+  .output(output)
   .query(async ({ input: { typebotId }, ctx: { user } }) => {
     const typebot = await prisma.typebot.findFirst({
       where: {
@@ -40,11 +54,22 @@ export const getLinkedTypebots = authenticatedProcedure
       },
       select: {
         id: true,
+        version: true,
         groups: true,
         variables: true,
         name: true,
         createdAt: true,
-        workspaceId: true,
+        workspace: {
+          select: {
+            isSuspended: true,
+            isPastDue: true,
+            members: {
+              select: {
+                userId: true,
+              },
+            },
+          },
+        },
         collaborators: {
           select: {
             type: true,
@@ -52,27 +77,25 @@ export const getLinkedTypebots = authenticatedProcedure
           },
         },
       },
-    })
+    });
 
     if (!typebot || (await isReadTypebotForbidden(typebot, user)))
-      throw new TRPCError({ code: 'NOT_FOUND', message: 'No typebot found' })
+      throw new TRPCError({ code: "NOT_FOUND", message: "No typebot found" });
 
     const linkedTypebotIds =
-      typebotSchema._def.schema.shape.groups
-        .parse(typebot.groups)
+      parseGroups(typebot.groups, { typebotVersion: typebot.version })
         .flatMap((group) => group.blocks)
-        .reduce<string[]>(
-          (typebotIds, block) =>
-            block.type === LogicBlockType.TYPEBOT_LINK &&
-            isDefined(block.options.typebotId) &&
-            !typebotIds.includes(block.options.typebotId) &&
-            block.options.mergeResults !== false
-              ? [...typebotIds, block.options.typebotId]
-              : typebotIds,
-          []
-        ) ?? []
+        .reduce<string[]>((typebotIds, block) => {
+          if (block.type !== LogicBlockType.TYPEBOT_LINK) return typebotIds;
+          const typebotId = block.options?.typebotId;
+          return isDefined(typebotId) &&
+            !typebotIds.includes(typebotId) &&
+            block.options?.mergeResults !== false
+            ? [...typebotIds, typebotId]
+            : typebotIds;
+        }, []) ?? [];
 
-    if (!linkedTypebotIds.length) return { typebots: [] }
+    if (!linkedTypebotIds.length) return { typebots: [] };
 
     const typebots = (
       await prisma.typebot.findMany({
@@ -82,11 +105,22 @@ export const getLinkedTypebots = authenticatedProcedure
         },
         select: {
           id: true,
+          version: true,
           groups: true,
           variables: true,
           name: true,
           createdAt: true,
-          workspaceId: true,
+          workspace: {
+            select: {
+              isSuspended: true,
+              isPastDue: true,
+              members: {
+                select: {
+                  userId: true,
+                },
+              },
+            },
+          },
           collaborators: {
             select: {
               type: true,
@@ -99,17 +133,17 @@ export const getLinkedTypebots = authenticatedProcedure
       .filter(async (typebot) => !(await isReadTypebotForbidden(typebot, user)))
       // To avoid the out of sort memory error, we sort the typebots manually
       .sort((a, b) => {
-        return b.createdAt.getTime() - a.createdAt.getTime()
+        return b.createdAt.getTime() - a.createdAt.getTime();
       })
       .map((typebot) => ({
         ...typebot,
-        groups: typebotSchema._def.schema.shape.groups.parse(typebot.groups),
-        variables: typebotSchema._def.schema.shape.variables.parse(
-          typebot.variables
-        ),
-      }))
+        groups: parseGroups(typebot.groups, {
+          typebotVersion: typebot.version,
+        }),
+        variables: typebotV6Schema.shape.variables.parse(typebot.variables),
+      }));
 
     return {
       typebots,
-    }
-  })
+    };
+  });

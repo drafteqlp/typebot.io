@@ -1,19 +1,20 @@
-import { Button, HStack, Stack } from '@chakra-ui/react'
-import { ThemeTemplate } from '@typebot.io/schemas'
-import { useState } from 'react'
-import { MyTemplates } from './MyTemplates'
-import { TemplatesGallery } from './TemplatesGallery'
+import { Button, HStack, Stack } from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import type { ThemeTemplate } from "@typebot.io/theme/schemas";
+import { useState } from "react";
+import { MyTemplates } from "./MyTemplates";
+import { TemplatesGallery } from "./TemplatesGallery";
 
-type Tab = 'my-templates' | 'gallery'
+type Tab = "my-templates" | "gallery";
 
 type Props = {
-  workspaceId: string
-  selectedTemplateId: string | undefined
-  currentTheme: ThemeTemplate['theme']
+  workspaceId: string;
+  selectedTemplateId: string | undefined;
+  currentTheme: ThemeTemplate["theme"];
   onTemplateSelect: (
-    template: Partial<Pick<ThemeTemplate, 'id' | 'theme'>>
-  ) => void
-}
+    template: Partial<Pick<ThemeTemplate, "id" | "theme">>,
+  ) => void;
+};
 
 export const ThemeTemplates = ({
   workspaceId,
@@ -21,7 +22,9 @@ export const ThemeTemplates = ({
   currentTheme,
   onTemplateSelect,
 }: Props) => {
-  const [selectedTab, setSelectedTab] = useState<Tab>('my-templates')
+  const { t } = useTranslate();
+
+  const [selectedTab, setSelectedTab] = useState<Tab>("my-templates");
 
   return (
     <Stack spacing={4}>
@@ -29,18 +32,18 @@ export const ThemeTemplates = ({
         <Button
           flex="1"
           variant="outline"
-          colorScheme={selectedTab === 'my-templates' ? 'blue' : 'gray'}
-          onClick={() => setSelectedTab('my-templates')}
+          colorScheme={selectedTab === "my-templates" ? "blue" : "gray"}
+          onClick={() => setSelectedTab("my-templates")}
         >
-          My templates
+          {t("theme.sideMenu.template.myTemplates")}
         </Button>
         <Button
           flex="1"
           variant="outline"
-          colorScheme={selectedTab === 'gallery' ? 'blue' : 'gray'}
-          onClick={() => setSelectedTab('gallery')}
+          colorScheme={selectedTab === "gallery" ? "blue" : "gray"}
+          onClick={() => setSelectedTab("gallery")}
         >
-          Gallery
+          {t("theme.sideMenu.template.gallery")}
         </Button>
       </HStack>
       <ThemeTemplatesBody
@@ -51,8 +54,8 @@ export const ThemeTemplates = ({
         onTemplateSelect={onTemplateSelect}
       />
     </Stack>
-  )
-}
+  );
+};
 
 const ThemeTemplatesBody = ({
   tab,
@@ -61,10 +64,10 @@ const ThemeTemplatesBody = ({
   currentTheme,
   onTemplateSelect,
 }: {
-  tab: Tab
+  tab: Tab;
 } & Props) => {
   switch (tab) {
-    case 'my-templates':
+    case "my-templates":
       return (
         <MyTemplates
           onTemplateSelect={onTemplateSelect}
@@ -72,8 +75,8 @@ const ThemeTemplatesBody = ({
           selectedTemplateId={selectedTemplateId}
           workspaceId={workspaceId}
         />
-      )
-    case 'gallery':
+      );
+    case "gallery":
       return (
         <TemplatesGallery
           onTemplateSelect={onTemplateSelect}
@@ -81,6 +84,6 @@ const ThemeTemplatesBody = ({
           selectedTemplateId={selectedTemplateId}
           workspaceId={workspaceId}
         />
-      )
+      );
   }
-}
+};

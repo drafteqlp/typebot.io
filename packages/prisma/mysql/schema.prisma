@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["metrics"]
 }
 
 datasource db {
@@ -41,23 +42,26 @@ model Session {
 }
 
 model User {
-  id                      String                    @id @default(cuid())
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime                  @default(now()) @updatedAt
-  lastActivityAt          DateTime                  @default(now())
-  name                    String?                   @db.VarChar(255)
-  email                   String?                   @unique
-  emailVerified           DateTime?
-  image                   String?                   @db.VarChar(1000)
-  company                 String?
-  onboardingCategories    Json
-  graphNavigation         GraphNavigation?
-  preferredAppAppearance  String?
-  accounts                Account[]
-  apiTokens               ApiToken[]
-  CollaboratorsOnTypebots CollaboratorsOnTypebots[]
-  workspaces              MemberInWorkspace[]
-  sessions                Session[]
+  id                          String                    @id @default(cuid())
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @default(now()) @updatedAt
+  lastActivityAt              DateTime                  @default(now())
+  name                        String?                   @db.VarChar(255)
+  email                       String?                   @unique
+  emailVerified               DateTime?
+  image                       String?                   @db.VarChar(1000)
+  company                     String?
+  onboardingCategories        Json
+  referral                    String?
+  graphNavigation             GraphNavigation?
+  preferredAppAppearance      String?
+  accounts                    Account[]
+  apiTokens                   ApiToken[]
+  CollaboratorsOnTypebots     CollaboratorsOnTypebots[]
+  workspaces                  MemberInWorkspace[]
+  sessions                    Session[]
+  bannedIps                   BannedIp[]
+  displayedInAppNotifications Json?
 }
 
 model ApiToken {
@@ -97,6 +101,8 @@ model Workspace {
   customSeatsLimit              Int?
   isQuarantined                 Boolean               @default(false)
   isSuspended                   Boolean               @default(false)
+  isPastDue                     Boolean               @default(false)
+  isVerified                    Boolean?
   themeTemplates                ThemeTemplate[]
 }
 
@@ -180,6 +186,7 @@ model Typebot {
   name                    String                    @db.VarChar(255)
   folderId                String?
   groups                  Json
+  events                  Json?
   variables               Json
   edges                   Json
   theme                   Json
@@ -199,6 +206,8 @@ model Typebot {
   isArchived              Boolean                   @default(false)
   isClosed                Boolean                   @default(false)
   whatsAppCredentialsId   String?
+  riskLevel               Int?
+  bannedIps               BannedIp[]
 
   @@index([workspaceId])
   @@index([folderId])
@@ -237,6 +246,7 @@ model PublicTypebot {
   updatedAt DateTime @default(now()) @updatedAt
   typebotId String   @unique
   groups    Json
+  events    Json?
   variables Json
   edges     Json
   theme     Json
@@ -245,19 +255,43 @@ model PublicTypebot {
 }
 
 model Result {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  typebotId   String
-  variables   Json
-  isCompleted Boolean
-  hasStarted  Boolean?
-  isArchived  Boolean? @default(false)
-  typebot     Typebot  @relation(fields: [typebotId], references: [id], onDelete: Cascade)
-  answers     Answer[]
-  logs        Log[]
+  id                 String                   @id @default(cuid())
+  createdAt          DateTime                 @default(now())
+  typebotId          String
+  variables          Json
+  isCompleted        Boolean
+  hasStarted         Boolean?
+  isArchived         Boolean?                 @default(false)
+  lastChatSessionId  String?
+  typebot            Typebot                  @relation(fields: [typebotId], references: [id], onDelete: Cascade)
+  answers            Answer[]
+  logs               Log[]
+  edges              VisitedEdge[]
+  setVariableHistory SetVariableHistoryItem[]
+  answersV2          AnswerV2[]
 
   @@index([typebotId, isArchived, hasStarted, createdAt(sort: Desc)])
   @@index([typebotId, isArchived, isCompleted])
+}
+
+model SetVariableHistoryItem {
+  result     Result @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  resultId   String
+  index      Int
+  variableId String
+  blockId    String
+  value      Json // string or list of strings
+
+  @@unique([resultId, index])
+}
+
+model VisitedEdge {
+  result   Result @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  resultId String
+  edgeId   String
+  index    Int
+
+  @@unique([resultId, index])
 }
 
 model Log {
@@ -272,20 +306,30 @@ model Log {
   @@index([resultId])
 }
 
+// TODO: gradually remove variableId and groupId
 model Answer {
-  createdAt   DateTime @default(now()) @updatedAt
-  resultId    String
-  blockId     String
-  itemId      String?
-  groupId     String
-  variableId  String?
-  content     String   @db.Text
-  storageUsed Int?
-  result      Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @updatedAt
+  resultId   String
+  blockId    String
+  groupId    String
+  variableId String?
+  content    String   @db.Text
+  result     Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
 
   @@unique([resultId, blockId, groupId])
-  @@index([blockId, itemId])
-  @@index([storageUsed])
+}
+
+model AnswerV2 {
+  id               Int      @id @default(autoincrement())
+  createdAt        DateTime @default(now())
+  blockId          String
+  content          String   @db.Text
+  attachedFileUrls Json?
+  resultId         String
+  result           Result   @relation(fields: [resultId], references: [id], onDelete: Cascade)
+
+  @@index([resultId])
+  @@index([blockId])
 }
 
 model Coupon {
@@ -329,10 +373,11 @@ model ClaimableCustomPlan {
 }
 
 model ChatSession {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  state     Json
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  state      Json
+  isReplying Boolean?
 }
 
 model ThemeTemplate {
@@ -345,6 +390,19 @@ model ThemeTemplate {
   workspaceId String
 
   @@index([workspaceId])
+}
+
+model BannedIp {
+  id                   String   @id @default(cuid())
+  createdAt            DateTime @default(now())
+  ip                   String   @unique
+  responsibleTypebot   Typebot  @relation(fields: [responsibleTypebotId], references: [id], onDelete: Restrict)
+  responsibleTypebotId String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  userId               String
+
+  @@index([responsibleTypebotId])
+  @@index([userId])
 }
 
 enum WorkspaceRole {

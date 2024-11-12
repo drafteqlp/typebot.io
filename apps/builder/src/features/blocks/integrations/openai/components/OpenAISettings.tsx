@@ -1,3 +1,7 @@
+import { DropdownList } from "@/components/DropdownList";
+import { TextInput } from "@/components/inputs";
+import { CredentialsDropdown } from "@/features/credentials/components/CredentialsDropdown";
+import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
 import {
   Accordion,
   AccordionButton,
@@ -5,72 +9,67 @@ import {
   AccordionItem,
   AccordionPanel,
   Stack,
-  useDisclosure,
   Text,
-} from '@chakra-ui/react'
-import React from 'react'
-import { CredentialsDropdown } from '@/features/credentials/components/CredentialsDropdown'
+  useDisclosure,
+} from "@chakra-ui/react";
 import {
+  defaultOpenAIOptions,
+  openAITasks,
+} from "@typebot.io/blocks-integrations/openai/constants";
+import type {
   ChatCompletionOpenAIOptions,
   CreateImageOpenAIOptions,
-  defaultBaseUrl,
-  defaultChatCompletionOptions,
+  CreateSpeechOpenAIOptions,
   OpenAIBlock,
-  openAITasks,
-} from '@typebot.io/schemas/features/blocks/integrations/openai'
-import { OpenAICredentialsModal } from './OpenAICredentialsModal'
-import { useWorkspace } from '@/features/workspace/WorkspaceProvider'
-import { DropdownList } from '@/components/DropdownList'
-import { OpenAIChatCompletionSettings } from './createChatCompletion/OpenAIChatCompletionSettings'
-import { createId } from '@paralleldrive/cuid2'
-import { TextInput } from '@/components/inputs'
+} from "@typebot.io/blocks-integrations/openai/schema";
+import React from "react";
+import { OpenAICredentialsModal } from "./OpenAICredentialsModal";
+import { OpenAICreateSpeechSettings } from "./audio/OpenAICreateSpeechSettings";
+import { OpenAIChatCompletionSettings } from "./createChatCompletion/OpenAIChatCompletionSettings";
 
-type OpenAITask = (typeof openAITasks)[number]
+type OpenAITask = (typeof openAITasks)[number];
 
 type Props = {
-  block: OpenAIBlock
-  onOptionsChange: (options: OpenAIBlock['options']) => void
-}
+  block: OpenAIBlock;
+  onOptionsChange: (options: OpenAIBlock["options"]) => void;
+};
 
 export const OpenAISettings = ({
   block: { options },
   onOptionsChange,
 }: Props) => {
-  const { workspace } = useWorkspace()
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { workspace } = useWorkspace();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const updateCredentialsId = (credentialsId: string | undefined) => {
     onOptionsChange({
       ...options,
       credentialsId,
-    })
-  }
+    });
+  };
 
   const updateTask = (task: OpenAITask) => {
-    switch (task) {
-      case 'Create chat completion': {
-        onOptionsChange({
-          credentialsId: options?.credentialsId,
-          ...defaultChatCompletionOptions(createId),
-        })
-        break
-      }
-    }
-  }
+    onOptionsChange({
+      credentialsId: options?.credentialsId,
+      task,
+    } as OpenAIBlock["options"]);
+  };
 
   const updateBaseUrl = (baseUrl: string) => {
     onOptionsChange({
       ...options,
       baseUrl,
-    })
-  }
+    });
+  };
 
   const updateApiVersion = (apiVersion: string) => {
     onOptionsChange({
       ...options,
       apiVersion,
-    })
-  }
+    });
+  };
+
+  const baseUrl = options?.baseUrl ?? defaultOpenAIOptions.baseUrl;
 
   return (
     <Stack>
@@ -91,7 +90,7 @@ export const OpenAISettings = ({
           />
         </>
       )}
-      {options.credentialsId && (
+      {options?.credentialsId && (
         <>
           <Accordion allowToggle>
             <AccordionItem>
@@ -104,10 +103,10 @@ export const OpenAISettings = ({
               <AccordionPanel as={Stack} spacing={4}>
                 <TextInput
                   label="Base URL"
-                  defaultValue={options.baseUrl}
+                  defaultValue={baseUrl}
                   onChange={updateBaseUrl}
                 />
-                {options.baseUrl !== defaultBaseUrl && (
+                {baseUrl !== defaultOpenAIOptions.baseUrl && (
                   <TextInput
                     label="API version"
                     defaultValue={options.apiVersion}
@@ -133,27 +132,38 @@ export const OpenAISettings = ({
         </>
       )}
     </Stack>
-  )
-}
+  );
+};
 
 const OpenAITaskSettings = ({
   options,
   onOptionsChange,
 }: {
-  options: ChatCompletionOpenAIOptions | CreateImageOpenAIOptions
-  onOptionsChange: (options: OpenAIBlock['options']) => void
-}) => {
+  options:
+    | ChatCompletionOpenAIOptions
+    | CreateImageOpenAIOptions
+    | CreateSpeechOpenAIOptions;
+  onOptionsChange: (options: OpenAIBlock["options"]) => void;
+}): JSX.Element | null => {
   switch (options.task) {
-    case 'Create chat completion': {
+    case "Create chat completion": {
       return (
         <OpenAIChatCompletionSettings
           options={options}
           onOptionsChange={onOptionsChange}
         />
-      )
+      );
     }
-    case 'Create image': {
-      return null
+    case "Create speech": {
+      return (
+        <OpenAICreateSpeechSettings
+          options={options}
+          onOptionsChange={onOptionsChange}
+        />
+      );
+    }
+    case "Create image": {
+      return null;
     }
   }
-}
+};

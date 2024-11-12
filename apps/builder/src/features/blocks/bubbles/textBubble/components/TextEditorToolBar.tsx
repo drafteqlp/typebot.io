@@ -1,42 +1,44 @@
 import {
-  StackProps,
+  BoldIcon,
+  ItalicIcon,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  LinkIcon,
+  UnderlineIcon,
+  UserIcon,
+} from "@/components/icons";
+import {
   HStack,
   IconButton,
+  type StackProps,
   useColorModeValue,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react";
 import {
   MARK_BOLD,
   MARK_ITALIC,
   MARK_UNDERLINE,
-} from '@udecode/plate-basic-marks'
-import { getPluginType, usePlateEditorRef } from '@udecode/plate-core'
-import { LinkToolbarButton } from '@udecode/plate-ui-link'
-import { MarkToolbarButton } from '@udecode/plate-ui-toolbar'
-import {
-  BoldIcon,
-  ItalicIcon,
-  UnderlineIcon,
-  LinkIcon,
-  UserIcon,
-} from '@/components/icons'
+} from "@udecode/plate-basic-marks";
+import { getPluginType, useEditorRef } from "@udecode/plate-core";
+import { LinkToolbarButton } from "./plate/LinkToolbarButton";
+import { MarkToolbarButton } from "./plate/MarkToolbarButton";
 
 type Props = {
-  onVariablesButtonClick: () => void
-} & StackProps
+  onVariablesButtonClick: () => void;
+} & StackProps;
 
 export const TextEditorToolBar = ({
   onVariablesButtonClick,
   ...props
 }: Props) => {
-  const editor = usePlateEditorRef()
+  const editor = useEditorRef();
+
   const handleVariablesButtonMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    onVariablesButtonClick()
-  }
+    e.stopPropagation();
+    e.preventDefault();
+    onVariablesButtonClick();
+  };
   return (
     <HStack
-      bgColor={useColorModeValue('white', 'gray.850')}
+      bgColor={useColorModeValue("white", "gray.850")}
       borderTopRadius="md"
       p={2}
       w="full"
@@ -52,25 +54,28 @@ export const TextEditorToolBar = ({
       />
       <span data-testid="bold-button">
         <MarkToolbarButton
-          type={getPluginType(editor, MARK_BOLD)}
+          nodeType={getPluginType(editor, MARK_BOLD)}
           icon={<BoldIcon />}
+          aria-label="Toggle bold"
         />
       </span>
       <span data-testid="italic-button">
         <MarkToolbarButton
-          type={getPluginType(editor, MARK_ITALIC)}
+          nodeType={getPluginType(editor, MARK_ITALIC)}
           icon={<ItalicIcon />}
+          aria-label="Toggle italic"
         />
       </span>
       <span data-testid="underline-button">
         <MarkToolbarButton
-          type={getPluginType(editor, MARK_UNDERLINE)}
+          nodeType={getPluginType(editor, MARK_UNDERLINE)}
           icon={<UnderlineIcon />}
+          aria-label="Toggle underline"
         />
       </span>
       <span data-testid="link-button">
-        <LinkToolbarButton icon={<LinkIcon />} />
+        <LinkToolbarButton icon={<LinkIcon />} aria-label="Add link" />
       </span>
     </HStack>
-  )
-}
+  );
+};

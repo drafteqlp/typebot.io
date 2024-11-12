@@ -1,5 +1,5 @@
-import { Icon, IconProps } from '@chakra-ui/react'
-import React from 'react'
+import { Icon, type IconProps } from "@chakra-ui/react";
+import React from "react";
 
 export const DefaultAvatar = (props: IconProps) => {
   return (
@@ -8,6 +8,7 @@ export const DefaultAvatar = (props: IconProps) => {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       boxSize="40px"
+      borderRadius="full"
       data-testid="default-avatar"
       {...props}
     >
@@ -34,5 +35,5 @@ export const DefaultAvatar = (props: IconProps) => {
         />
       </g>
     </Icon>
-  )
-}
+  );
+};

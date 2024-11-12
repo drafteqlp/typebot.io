@@ -1,24 +1,46 @@
-import { MenuList, MenuItem } from '@chakra-ui/react'
-import { CopyIcon, TrashIcon } from '@/components/icons'
-import { useTypebot } from '@/features/editor/providers/TypebotProvider'
-import { BlockIndices } from '@typebot.io/schemas'
+import { CopyIcon, TrashIcon } from "@/components/icons";
+import { useTypebot } from "@/features/editor/providers/TypebotProvider";
+import { ForgedBlockTurnIntoMenu } from "@/features/forge/components/ForgedBlockTurnIntoMenu";
+import { MenuItem, MenuList } from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import type {
+  BlockIndices,
+  BlockV6,
+} from "@typebot.io/blocks-core/schemas/schema";
+import type { TurnableIntoParam } from "@typebot.io/forge/types";
+import type { ZodObject } from "zod";
 
-type Props = { indices: BlockIndices }
-export const BlockNodeContextMenu = ({ indices }: Props) => {
-  const { deleteBlock, duplicateBlock } = useTypebot()
+type Props = {
+  indices: BlockIndices;
+  block: BlockV6;
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  onTurnIntoClick: (params: TurnableIntoParam, schema: ZodObject<any>) => void;
+};
 
-  const handleDuplicateClick = () => duplicateBlock(indices)
+export const BlockNodeContextMenu = ({
+  indices,
+  block,
+  onTurnIntoClick,
+}: Props) => {
+  const { t } = useTranslate();
+  const { deleteBlock, duplicateBlock } = useTypebot();
 
-  const handleDeleteClick = () => deleteBlock(indices)
+  const handleDuplicateClick = () => duplicateBlock(indices);
+
+  const handleDeleteClick = () => deleteBlock(indices);
 
   return (
     <MenuList>
+      <ForgedBlockTurnIntoMenu
+        block={block}
+        onTurnIntoClick={onTurnIntoClick}
+      />
       <MenuItem icon={<CopyIcon />} onClick={handleDuplicateClick}>
-        Duplicate
+        {t("duplicate")}
       </MenuItem>
       <MenuItem icon={<TrashIcon />} onClick={handleDeleteClick}>
-        Delete
+        {t("delete")}
       </MenuItem>
     </MenuList>
-  )
-}
+  );
+};

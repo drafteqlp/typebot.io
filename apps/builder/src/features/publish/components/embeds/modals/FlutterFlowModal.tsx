@@ -1,25 +1,25 @@
-import { AlertInfo } from '@/components/AlertInfo'
-import { CopyButton } from '@/components/CopyButton'
+import { AlertInfo } from "@/components/AlertInfo";
+import { CopyButton } from "@/components/CopyButton";
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  Heading,
-  ModalCloseButton,
-  ModalBody,
-  OrderedList,
-  ListItem,
   Code,
-  InputGroup,
+  Heading,
   Input,
+  InputGroup,
   InputRightElement,
+  ListItem,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
   ModalFooter,
-  Text,
+  ModalHeader,
+  ModalOverlay,
+  OrderedList,
   Stack,
-} from '@chakra-ui/react'
-import { getViewerUrl } from '@typebot.io/lib/getViewerUrl'
-import { ModalProps } from '../EmbedButton'
+  Text,
+} from "@chakra-ui/react";
+import { env } from "@typebot.io/env";
+import type { ModalProps } from "../EmbedButton";
 
 export const FlutterFlowModal = ({
   isPublished,
@@ -50,13 +50,13 @@ export const FlutterFlowModal = ({
                 </Text>
                 <InputGroup size="sm">
                   <Input
-                    type={'text'}
-                    defaultValue={`${getViewerUrl()}/${publicId}`}
+                    type={"text"}
+                    defaultValue={`${env.NEXT_PUBLIC_VIEWER_URL[0]}/${publicId}`}
                   />
                   <InputRightElement width="60px">
                     <CopyButton
                       size="sm"
-                      textToCopy={`${getViewerUrl()}/${publicId}`}
+                      textToCopy={`${env.NEXT_PUBLIC_VIEWER_URL[0]}/${publicId}`}
                     />
                   </InputRightElement>
                 </InputGroup>
@@ -67,5 +67,5 @@ export const FlutterFlowModal = ({
         <ModalFooter />
       </ModalContent>
     </Modal>
-  )
-}
+  );
+};

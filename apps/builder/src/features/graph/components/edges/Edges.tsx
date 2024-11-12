@@ -1,34 +1,37 @@
-import { chakra, useColorMode } from '@chakra-ui/react'
-import { colors } from '@/lib/theme'
-import { Edge as EdgeProps } from '@typebot.io/schemas'
-import React, { useMemo } from 'react'
-import { DrawingEdge } from './DrawingEdge'
-import { DropOffEdge } from './DropOffEdge'
-import { Edge } from './Edge'
-import { TotalAnswersInBlock } from '@typebot.io/schemas/features/analytics'
+import { colors } from "@/lib/theme";
+import { chakra, useColorMode } from "@chakra-ui/react";
+import type { GroupV6 } from "@typebot.io/groups/schemas";
+import type {
+  TotalAnswers,
+  TotalVisitedEdges,
+} from "@typebot.io/schemas/features/analytics";
+import type { BlockSource } from "@typebot.io/typebot/schemas/edge";
+import type { Edge as EdgeProps } from "@typebot.io/typebot/schemas/edge";
+import React from "react";
+import { useGraph } from "../../providers/GraphProvider";
+import { DrawingEdge } from "./DrawingEdge";
+import { DropOffEdge } from "./DropOffEdge";
+import { Edge } from "./Edge";
 
 type Props = {
-  edges: EdgeProps[]
-  totalAnswersInBlocks?: TotalAnswersInBlock[]
-  onUnlockProPlanClick?: () => void
-}
+  edges: EdgeProps[];
+  groups: GroupV6[];
+  inputBlockIds: string[];
+  totalVisitedEdges?: TotalVisitedEdges[];
+  totalAnswers?: TotalAnswers[];
+  onUnlockProPlanClick?: () => void;
+};
 
 export const Edges = ({
   edges,
-  totalAnswersInBlocks,
+  groups,
+  inputBlockIds,
+  totalVisitedEdges,
+  totalAnswers,
   onUnlockProPlanClick,
 }: Props) => {
-  const isDark = useColorMode().colorMode === 'dark'
-  const uniqueBlockIds = useMemo(
-    () => [
-      ...new Set(
-        totalAnswersInBlocks?.map(
-          (totalAnswersInBlock) => totalAnswersInBlock.blockId
-        )
-      ),
-    ],
-    [totalAnswersInBlocks]
-  )
+  const { connectingIds } = useGraph();
+  const isDark = useColorMode().colorMode === "dark";
   return (
     <chakra.svg
       width="full"
@@ -39,23 +42,35 @@ export const Edges = ({
       top="0"
       shapeRendering="geometricPrecision"
     >
-      <DrawingEdge />
+      {connectingIds && <DrawingEdge connectingIds={connectingIds} />}
       {edges.map((edge) => (
-        <Edge key={edge.id} edge={edge} />
+        <Edge
+          key={edge.id}
+          edge={edge}
+          fromGroupId={
+            "blockId" in edge.from
+              ? groups.find((g) =>
+                  g.blocks.some(
+                    (b) => b.id === (edge.from as BlockSource).blockId,
+                  ),
+                )?.id
+              : undefined
+          }
+        />
       ))}
-      {totalAnswersInBlocks &&
-        uniqueBlockIds
-          ?.slice(1)
-          .map((blockId) => (
-            <DropOffEdge
-              key={blockId}
-              blockId={blockId}
-              totalAnswersInBlocks={totalAnswersInBlocks}
-              onUnlockProPlanClick={onUnlockProPlanClick}
-            />
-          ))}
+      {totalVisitedEdges &&
+        totalAnswers &&
+        inputBlockIds.map((blockId) => (
+          <DropOffEdge
+            key={blockId}
+            blockId={blockId}
+            totalVisitedEdges={totalVisitedEdges}
+            totalAnswers={totalAnswers}
+            onUnlockProPlanClick={onUnlockProPlanClick}
+          />
+        ))}
       <marker
-        id={'arrow'}
+        id={"arrow"}
         refX="8"
         refY="4"
         orient="auto"
@@ -70,7 +85,7 @@ export const Edges = ({
         />
       </marker>
       <marker
-        id={'blue-arrow'}
+        id={"blue-arrow"}
         refX="8"
         refY="4"
         orient="auto"
@@ -85,5 +100,5 @@ export const Edges = ({
         />
       </marker>
     </chakra.svg>
-  )
-}
+  );
+};

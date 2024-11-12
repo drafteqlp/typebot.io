@@ -1,29 +1,26 @@
-import prisma from '@typebot.io/lib/prisma'
-import {
-  CollaborationType,
-  CollaboratorsOnTypebots,
-  User,
-} from '@typebot.io/prisma'
-import { Typebot } from '@typebot.io/schemas'
-import { isNotDefined } from '@typebot.io/lib'
+import { CollaborationType } from "@typebot.io/prisma/enum";
+import type { Prisma } from "@typebot.io/prisma/types";
 
 export const isWriteTypebotForbidden = async (
-  typebot: Pick<Typebot, 'workspaceId'> & {
-    collaborators: Pick<CollaboratorsOnTypebots, 'userId' | 'type'>[]
+  typebot: {
+    collaborators: Pick<Prisma.CollaboratorsOnTypebots, "userId" | "type">[];
+  } & {
+    workspace: Pick<Prisma.Workspace, "isSuspended" | "isPastDue"> & {
+      members: Pick<Prisma.MemberInWorkspace, "userId" | "role">[];
+    };
   },
-  user: Pick<User, 'id'>
+  user: Pick<Prisma.User, "id">,
 ) => {
-  if (
-    typebot.collaborators.find(
-      (collaborator) => collaborator.userId === user.id
-    )?.type === CollaborationType.WRITE
-  )
-    return false
-  const memberInWorkspace = await prisma.memberInWorkspace.findFirst({
-    where: {
-      workspaceId: typebot.workspaceId,
-      userId: user.id,
-    },
-  })
-  return isNotDefined(memberInWorkspace) || memberInWorkspace.role === 'GUEST'
-}
+  return (
+    typebot.workspace.isSuspended ||
+    typebot.workspace.isPastDue ||
+    (!typebot.collaborators.some(
+      (collaborator) =>
+        collaborator.userId === user.id &&
+        collaborator.type === CollaborationType.WRITE,
+    ) &&
+      !typebot.workspace.members.some(
+        (m) => m.userId === user.id && m.role !== "GUEST",
+      ))
+  );
+};

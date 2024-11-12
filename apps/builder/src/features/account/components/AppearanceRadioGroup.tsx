@@ -1,42 +1,39 @@
 import {
-  RadioGroup,
   HStack,
-  VStack,
-  Stack,
+  Image,
   Radio,
+  RadioGroup,
+  Stack,
   Text,
-} from '@chakra-ui/react'
-import Image from 'next/image'
-import lightModeIllustration from 'public/images/light-mode.png'
-import darkModeIllustration from 'public/images/dark-mode.png'
-import systemModeIllustration from 'public/images/system-mode.png'
-import { useTranslate } from '@tolgee/react'
+  VStack,
+} from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
 
 type Props = {
-  defaultValue: string
-  onChange: (value: string) => void
-}
+  defaultValue: string;
+  onChange: (value: string) => void;
+};
 
 export const AppearanceRadioGroup = ({ defaultValue, onChange }: Props) => {
-  const { t } = useTranslate()
+  const { t } = useTranslate();
 
   const appearanceData = [
     {
-      value: 'light',
-      label: t('account.preferences.appearance.lightLabel'),
-      image: lightModeIllustration,
+      value: "light",
+      label: t("account.preferences.appearance.lightLabel"),
+      image: "/images/light-mode.png",
     },
     {
-      value: 'dark',
-      label: t('account.preferences.appearance.darkLabel'),
-      image: darkModeIllustration,
+      value: "dark",
+      label: t("account.preferences.appearance.darkLabel"),
+      image: "/images/dark-mode.png",
     },
     {
-      value: 'system',
-      label: t('account.preferences.appearance.systemLabel'),
-      image: systemModeIllustration,
+      value: "system",
+      label: t("account.preferences.appearance.systemLabel"),
+      image: "/images/system-mode.png",
     },
-  ]
+  ];
   return (
     <RadioGroup onChange={onChange} defaultValue={defaultValue}>
       <HStack spacing={4} w="full" align="stretch">
@@ -57,7 +54,7 @@ export const AppearanceRadioGroup = ({ defaultValue, onChange }: Props) => {
               <Image
                 src={option.image}
                 alt="Theme preview"
-                style={{ borderRadius: '0.250rem' }}
+                style={{ borderRadius: "0.250rem" }}
                 placeholder="blur"
               />
               <Stack>
@@ -70,5 +67,5 @@ export const AppearanceRadioGroup = ({ defaultValue, onChange }: Props) => {
         ))}
       </HStack>
     </RadioGroup>
-  )
-}
+  );
+};

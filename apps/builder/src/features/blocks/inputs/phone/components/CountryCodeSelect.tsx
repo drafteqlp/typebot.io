@@ -1,18 +1,22 @@
-import { Select } from '@chakra-ui/react'
-import React, { ChangeEvent } from 'react'
+import { Select } from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import React, { type ChangeEvent } from "react";
 
 type Props = {
-  countryCode?: string
-  onSelect: (countryCode: string) => void
-}
+  countryCode?: string;
+  onSelect: (countryCode: string) => void;
+};
 
 export const CountryCodeSelect = ({ countryCode, onSelect }: Props) => {
+  const { t } = useTranslate();
   const handleOnChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    onSelect(e.target.value)
-  }
+    onSelect(e.target.value);
+  };
   return (
     <Select
-      placeholder="International"
+      placeholder={t(
+        "blocks.inputs.phone.settings.international.placeholder.label",
+      )}
       value={countryCode}
       onChange={handleOnChange}
     >
@@ -66,7 +70,7 @@ export const CountryCodeSelect = ({ countryCode, onSelect }: Props) => {
       <option value="DK">Denmark (+45)</option>
       <option value="DJ">Djibouti (+253)</option>
       <option value="DM">Dominica (+1809)</option>
-      <option value="DO">Dominican Republic (+1809)</option>
+      <option value="DO">Dominican Republic (+18XX)</option>
       <option value="EC">Ecuador (+593)</option>
       <option value="EG">Egypt (+20)</option>
       <option value="SV">El Salvador (+503)</option>
@@ -232,5 +236,5 @@ export const CountryCodeSelect = ({ countryCode, onSelect }: Props) => {
       <option value="ZM">Zambia (+260)</option>
       <option value="ZW">Zimbabwe (+263)</option>
     </Select>
-  )
-}
+  );
+};

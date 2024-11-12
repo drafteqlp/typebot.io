@@ -1,17 +1,14 @@
-import test, { expect } from '@playwright/test'
-import { createId } from '@paralleldrive/cuid2'
-import { createTypebots } from '@typebot.io/lib/playwright/databaseActions'
-import { parseDefaultGroupWithBlock } from '@typebot.io/lib/playwright/databaseHelpers'
-import {
-  defaultChatwootOptions,
-  IntegrationBlockType,
-} from '@typebot.io/schemas'
+import { createId } from "@paralleldrive/cuid2";
+import test, { expect } from "@playwright/test";
+import { IntegrationBlockType } from "@typebot.io/blocks-integrations/constants";
+import { createTypebots } from "@typebot.io/playwright/databaseActions";
+import { parseDefaultGroupWithBlock } from "@typebot.io/playwright/databaseHelpers";
 
-const typebotId = createId()
+const typebotId = createId();
 
-const chatwootTestWebsiteToken = 'tueXiiqEmrWUCZ4NUyoR7nhE'
+const chatwootTestWebsiteToken = "tueXiiqEmrWUCZ4NUyoR7nhE";
 
-test('should work as expected', async ({ page }) => {
+test("should work as expected", async ({ page }) => {
   await createTypebots([
     {
       id: typebotId,
@@ -19,15 +16,14 @@ test('should work as expected', async ({ page }) => {
         {
           type: IntegrationBlockType.CHATWOOT,
           options: {
-            ...defaultChatwootOptions,
             websiteToken: chatwootTestWebsiteToken,
           },
         },
-        { withGoButton: true }
+        { withGoButton: true },
       ),
     },
-  ])
-  await page.goto(`/${typebotId}-public`)
-  await page.getByRole('button', { name: 'Go' }).click()
-  await expect(page.locator('#chatwoot_live_chat_widget')).toBeVisible()
-})
+  ]);
+  await page.goto(`/${typebotId}-public`);
+  await page.getByRole("button", { name: "Go" }).click();
+  await expect(page.locator("#chatwoot_live_chat_widget")).toBeVisible();
+});

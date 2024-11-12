@@ -1,53 +1,37 @@
-import { CodeEditor } from '@/components/inputs/CodeEditor'
-import { TextLink } from '@/components/TextLink'
-import { useEditor } from '@/features/editor/providers/EditorProvider'
-import { useTypebot } from '@/features/editor/providers/TypebotProvider'
-import { parseApiHost } from '@/features/publish/components/embeds/snippetParsers'
+import { TextLink } from "@/components/TextLink";
+import { CodeEditor } from "@/components/inputs/CodeEditor";
+import { useEditor } from "@/features/editor/providers/EditorProvider";
+import { useTypebot } from "@/features/editor/providers/TypebotProvider";
+import { parseApiHost } from "@/features/publish/components/embeds/snippetParsers";
 import {
   Code,
   ListItem,
   OrderedList,
   Stack,
-  StackProps,
+  type StackProps,
   Text,
-} from '@chakra-ui/react'
+} from "@chakra-ui/react";
 
 export const ApiPreviewInstructions = (props: StackProps) => {
-  const { typebot } = useTypebot()
-  const { startPreviewAtGroup } = useEditor()
+  const { typebot } = useTypebot();
+  const { startPreviewAtGroup } = useEditor();
 
   const startParamsBody = startPreviewAtGroup
     ? `{
-  "startParams": {
-    "typebot": "${typebot?.id}",
-    "isPreview": true,
     "startGroupId": "${startPreviewAtGroup}"
-  }
 }`
-    : `{
-  "startParams": {
-    "typebot": "${typebot?.id}",
-    "isPreview": true
-  }
-}`
+    : undefined;
 
   const replyBody = `{
-  "message": "This is my reply",
-  "sessionId": "<ID_FROM_FIRST_RESPONSE>"
-}`
+  "message": "This is my reply"
+}`;
 
   return (
-    <Stack
-      spacing={10}
-      overflowY="scroll"
-      className="hide-scrollbar"
-      w="full"
-      {...props}
-    >
+    <Stack spacing={10} overflowY="auto" w="full" {...props}>
       <OrderedList spacing={6} px="1">
         <ListItem>
-          All your requests need to be authenticated with an API token.{' '}
-          <TextLink href="https://docs.typebot.io/api/builder/authenticate">
+          All your requests need to be authenticated with an API token.{" "}
+          <TextLink href="https://docs.typebot.io/api-reference/authentication">
             See instructions
           </TextLink>
           .
@@ -59,13 +43,17 @@ export const ApiPreviewInstructions = (props: StackProps) => {
             </Text>
             <CodeEditor
               isReadOnly
-              lang={'shell'}
-              value={`${parseApiHost(
-                typebot?.customDomain
-              )}/api/v2/sendMessage`}
+              lang={"shell"}
+              value={`${parseApiHost(typebot?.customDomain)}/api/v1/typebots/${
+                typebot?.id
+              }/preview/startChat`}
             />
-            <Text>with the following JSON body:</Text>
-            <CodeEditor isReadOnly lang={'json'} value={startParamsBody} />
+            {startPreviewAtGroup && (
+              <>
+                <Text>with the following JSON body:</Text>
+                <CodeEditor isReadOnly lang={"json"} value={startParamsBody} />
+              </>
+            )}
           </Stack>
         </ListItem>
         <ListItem>
@@ -79,27 +67,30 @@ export const ApiPreviewInstructions = (props: StackProps) => {
             </Text>
             <CodeEditor
               isReadOnly
-              lang={'shell'}
+              lang={"shell"}
               value={`${parseApiHost(
-                typebot?.customDomain
-              )}/api/v2/sendMessage`}
+                typebot?.customDomain,
+              )}/api/v1/sessions/<ID_FROM_FIRST_RESPONSE>/continueChat`}
             />
             <Text>With the following JSON body:</Text>
-            <CodeEditor isReadOnly lang={'json'} value={replyBody} />
+            <CodeEditor isReadOnly lang={"json"} value={replyBody} />
             <Text>
-              Replace <Code>{'<ID_FROM_FIRST_RESPONSE>'}</Code> with{' '}
+              Replace <Code>{"<ID_FROM_FIRST_RESPONSE>"}</Code> with{" "}
               <Code>sessionId</Code>.
             </Text>
           </Stack>
         </ListItem>
       </OrderedList>
       <Text fontSize="sm" pl="1">
-        Check out the{' '}
-        <TextLink href="https://docs.typebot.io/api/send-a-message" isExternal>
+        Check out the{" "}
+        <TextLink
+          href="https://docs.typebot.io/api-reference/chat/start-preview-chat"
+          isExternal
+        >
           API reference
-        </TextLink>{' '}
+        </TextLink>{" "}
         for more information
       </Text>
     </Stack>
-  )
-}
+  );
+};

@@ -1,39 +1,43 @@
-import { Show } from 'solid-js'
-import { isNotDefined, isSvgSrc } from '@typebot.io/lib'
-import { BubbleTheme, ButtonTheme } from '../types'
-import { isLight } from '@typebot.io/lib/hexToRgb'
-import { clsx } from 'clsx'
+import { isLight } from "@typebot.io/lib/hexToRgb";
+import { isNotDefined, isSvgSrc } from "@typebot.io/lib/utils";
+import { clsx } from "clsx";
+import { Show } from "solid-js";
+import type { BubbleTheme, ButtonTheme } from "../types";
 
-type Props = Pick<BubbleTheme, 'placement'> &
+type Props = Pick<BubbleTheme, "placement"> &
   ButtonTheme & {
-    isBotOpened: boolean
-    toggleBot: () => void
-  }
+    isBotOpened: boolean;
+    toggleBot: () => void;
+    buttonSize: `${number}px`;
+  };
 
-const defaultButtonColor = '#0042DA'
-const defaultDarkIconColor = '#27272A'
-const defaultLightIconColor = '#fff'
+const defaultButtonColor = "#0042DA";
+const defaultDarkIconColor = "#27272A";
+const defaultLightIconColor = "#fff";
 
 const isImageSrc = (src: string) =>
-  src.startsWith('http') || src.startsWith('data:image/svg+xml')
+  src.startsWith("http") || src.startsWith("data:image/svg+xml");
 
 export const BubbleButton = (props: Props) => (
   <button
     part="button"
     onClick={() => props.toggleBot()}
     class={clsx(
-      'fixed bottom-5 shadow-md  rounded-full hover:scale-110 active:scale-95 transition-transform duration-200 flex justify-center items-center animate-fade-in',
-      props.size === 'large' ? ' w-16 h-16' : ' w-12 h-12',
-      props.placement === 'left' ? ' left-5' : ' right-5'
+      `fixed bottom-5 shadow-md  rounded-full hover:scale-110 active:scale-95 transition-transform duration-200 flex justify-center items-center animate-fade-in`,
+      props.placement === "left" ? " left-5" : " right-5",
     )}
     style={{
-      'background-color': props.backgroundColor ?? defaultButtonColor,
-      'z-index': 42424242,
+      "background-color": props.backgroundColor ?? defaultButtonColor,
+      "z-index": 42424242,
+      width: props.buttonSize,
+      height: props.buttonSize,
     }}
     aria-label="Open chatbot"
   >
     <Show when={isNotDefined(props.customIconSrc)} keyed>
       <svg
+        //@ts-expect-error part exists
+        part="button-icon"
         viewBox="0 0 24 24"
         style={{
           stroke:
@@ -43,9 +47,8 @@ export const BubbleButton = (props: Props) => (
               : defaultLightIconColor),
         }}
         class={clsx(
-          'stroke-2 fill-transparent absolute duration-200 transition',
-          props.isBotOpened ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
-          props.size === 'large' ? 'w-9' : 'w-7'
+          "stroke-2 fill-transparent absolute duration-200 transition w-[60%]",
+          props.isBotOpened ? "scale-0 opacity-0" : "scale-100 opacity-100",
         )}
       >
         <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
@@ -56,26 +59,23 @@ export const BubbleButton = (props: Props) => (
         part="button-icon"
         src={props.customIconSrc}
         class={clsx(
-          'duration-200 transition',
-          props.isBotOpened ? 'scale-0 opacity-0' : 'scale-100 opacity-100',
-          isSvgSrc(props.customIconSrc)
-            ? props.size === 'large'
-              ? 'w-9 h-9'
-              : 'w-7 h-7'
-            : 'w-[90%] h-[90%]',
-          isSvgSrc(props.customIconSrc) ? '' : 'object-cover rounded-full'
+          "duration-200 transition",
+          props.isBotOpened ? "scale-0 opacity-0" : "scale-100 opacity-100",
+          isSvgSrc(props.customIconSrc) ? "w-[60%]" : "w-full h-full",
+          isSvgSrc(props.customIconSrc) ? "" : "object-cover rounded-full",
         )}
         alt="Bubble button icon"
       />
     </Show>
     <Show when={props.customIconSrc && !isImageSrc(props.customIconSrc)}>
       <span
+        part="button-icon"
         class={clsx(
-          'text-4xl duration-200 transition',
-          props.isBotOpened ? 'scale-0 opacity-0' : 'scale-100 opacity-100'
+          "text-4xl duration-200 transition",
+          props.isBotOpened ? "scale-0 opacity-0" : "scale-100 opacity-100",
         )}
         style={{
-          'font-family':
+          "font-family":
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
         }}
       >
@@ -84,6 +84,8 @@ export const BubbleButton = (props: Props) => (
     </Show>
     <Show when={isNotDefined(props.customCloseIconSrc)}>
       <svg
+        //@ts-expect-error part exists
+        part="button-icon"
         viewBox="0 0 24 24"
         style={{
           fill:
@@ -93,11 +95,10 @@ export const BubbleButton = (props: Props) => (
               : defaultLightIconColor),
         }}
         class={clsx(
-          'absolute duration-200 transition',
+          "absolute duration-200 transition w-[60%]",
           props.isBotOpened
-            ? 'scale-100 rotate-0 opacity-100'
-            : 'scale-0 -rotate-180 opacity-0',
-          props.size === 'large' ? ' w-9' : ' w-7'
+            ? "scale-100 rotate-0 opacity-100"
+            : "scale-0 -rotate-180 opacity-0",
         )}
       >
         <path
@@ -114,16 +115,12 @@ export const BubbleButton = (props: Props) => (
         part="button-icon"
         src={props.customCloseIconSrc}
         class={clsx(
-          'absolute duration-200 transition',
+          "absolute duration-200 transition",
           props.isBotOpened
-            ? 'scale-100 rotate-0 opacity-100'
-            : 'scale-0 -rotate-180 opacity-0',
-          isSvgSrc(props.customCloseIconSrc)
-            ? props.size === 'large'
-              ? 'w-9 h-9'
-              : 'w-7 h-7'
-            : 'w-[90%] h-[90%]',
-          isSvgSrc(props.customCloseIconSrc) ? '' : 'object-cover rounded-full'
+            ? "scale-100 rotate-0 opacity-100"
+            : "scale-0 -rotate-180 opacity-0",
+          isSvgSrc(props.customCloseIconSrc) ? "w-[60%]" : "w-full h-full",
+          isSvgSrc(props.customCloseIconSrc) ? "" : "object-cover rounded-full",
         )}
         alt="Bubble button close icon"
       />
@@ -132,14 +129,15 @@ export const BubbleButton = (props: Props) => (
       when={props.customCloseIconSrc && !isImageSrc(props.customCloseIconSrc)}
     >
       <span
+        part="button-icon"
         class={clsx(
-          'absolute text-4xl duration-200 transition',
+          "absolute text-4xl duration-200 transition",
           props.isBotOpened
-            ? 'scale-100 rotate-0 opacity-100'
-            : 'scale-0 -rotate-180 opacity-0'
+            ? "scale-100 rotate-0 opacity-100"
+            : "scale-0 -rotate-180 opacity-0",
         )}
         style={{
-          'font-family':
+          "font-family":
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'",
         }}
       >
@@ -147,4 +145,4 @@ export const BubbleButton = (props: Props) => (
       </span>
     </Show>
   </button>
-)
+);

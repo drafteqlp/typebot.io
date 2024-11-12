@@ -1,113 +1,218 @@
-import { LiteBadge } from './LiteBadge'
-import { createEffect, createSignal, onCleanup, onMount, Show } from 'solid-js'
-import { isNotDefined, isNotEmpty } from '@typebot.io/lib'
-import { getInitialChatReplyQuery } from '@/queries/getInitialChatReplyQuery'
-import { ConversationContainer } from './ConversationContainer'
-import { setIsMobile } from '@/utils/isMobileSignal'
-import { BotContext, InitialChatReply, OutgoingLog } from '@/types'
-import { ErrorMessage } from './ErrorMessage'
+import { startChatQuery } from "@/queries/startChatQuery";
+import type { BotContext, OutgoingLog } from "@/types";
+import { CorsError } from "@/utils/CorsError";
+import { setBotContainerHeight } from "@/utils/botContainerHeightSignal";
+import { setBotContainer } from "@/utils/botContainerSignal";
+import { injectFont } from "@/utils/injectFont";
+import { setIsMobile } from "@/utils/isMobileSignal";
+import { persist } from "@/utils/persist";
+import { setCssVariablesValue } from "@/utils/setCssVariablesValue";
 import {
   getExistingResultIdFromStorage,
+  getInitialChatReplyFromStorage,
+  setInitialChatReplyInStorage,
   setResultInStorage,
-} from '@/utils/storage'
-import { setCssVariablesValue } from '@/utils/setCssVariablesValue'
-import immutableCss from '../assets/immutable.css'
+  wipeExistingChatStateInStorage,
+} from "@/utils/storage";
+import { toaster } from "@/utils/toaster";
+import { Toast, Toaster } from "@ark-ui/solid";
+import type { InputBlock } from "@typebot.io/blocks-inputs/schema";
+import type {
+  StartChatResponse,
+  StartFrom,
+} from "@typebot.io/bot-engine/schemas/api";
+import { isDefined, isNotDefined, isNotEmpty } from "@typebot.io/lib/utils";
+import { defaultSettings } from "@typebot.io/settings/constants";
+import {
+  defaultFontFamily,
+  defaultFontType,
+  defaultProgressBarPosition,
+} from "@typebot.io/theme/constants";
+import type { Font } from "@typebot.io/theme/schemas";
+import clsx from "clsx";
+import { HTTPError } from "ky";
+import { Show, createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { Portal } from "solid-js/web";
+import immutableCss from "../assets/immutable.css";
+import { ConversationContainer } from "./ConversationContainer/ConversationContainer";
+import { ErrorMessage } from "./ErrorMessage";
+import { LiteBadge } from "./LiteBadge";
+import { ProgressBar } from "./ProgressBar";
+import { CloseIcon } from "./icons/CloseIcon";
 
 export type BotProps = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  typebot: string | any
-  isPreview?: boolean
-  resultId?: string
-  startGroupId?: string
-  prefilledVariables?: Record<string, unknown>
-  apiHost?: string
-  onNewInputBlock?: (ids: { id: string; groupId: string }) => void
-  onAnswer?: (answer: { message: string; blockId: string }) => void
-  onInit?: () => void
-  onEnd?: () => void
-  onNewLogs?: (logs: OutgoingLog[]) => void
-}
+  typebot: string | any;
+  isPreview?: boolean;
+  resultId?: string;
+  prefilledVariables?: Record<string, unknown>;
+  apiHost?: string;
+  font?: Font;
+  progressBarRef?: HTMLDivElement;
+  startFrom?: StartFrom;
+  sessionId?: string;
+  onNewInputBlock?: (inputBlock: InputBlock) => void;
+  onAnswer?: (answer: { message: string; blockId: string }) => void;
+  onInit?: () => void;
+  onEnd?: () => void;
+  onNewLogs?: (logs: OutgoingLog[]) => void;
+  onChatStatePersisted?: (isEnabled: boolean) => void;
+  onScriptExecutionSuccess?: (message: string) => void;
+};
 
 export const Bot = (props: BotProps & { class?: string }) => {
   const [initialChatReply, setInitialChatReply] = createSignal<
-    InitialChatReply | undefined
-  >()
-  const [customCss, setCustomCss] = createSignal('')
-  const [isInitialized, setIsInitialized] = createSignal(false)
-  const [error, setError] = createSignal<Error | undefined>()
+    StartChatResponse | undefined
+  >();
+  const [customCss, setCustomCss] = createSignal("");
+  const [isInitialized, setIsInitialized] = createSignal(false);
+  const [error, setError] = createSignal<Error | undefined>();
 
   const initializeBot = async () => {
-    setIsInitialized(true)
-    const urlParams = new URLSearchParams(location.search)
-    props.onInit?.()
-    const prefilledVariables: { [key: string]: string } = {}
+    if (props.font) injectFont(props.font);
+    setIsInitialized(true);
+    const urlParams = new URLSearchParams(location.search);
+    props.onInit?.();
+    const prefilledVariables: { [key: string]: string } = {};
     urlParams.forEach((value, key) => {
-      prefilledVariables[key] = value
-    })
+      prefilledVariables[key] = value;
+    });
     const typebotIdFromProps =
-      typeof props.typebot === 'string' ? props.typebot : undefined
-    const { data, error } = await getInitialChatReplyQuery({
-      stripeRedirectStatus: urlParams.get('redirect_status') ?? undefined,
+      typeof props.typebot === "string" ? props.typebot : undefined;
+    const isPreview =
+      typeof props.typebot !== "string" || (props.isPreview ?? false);
+    const resultIdInStorage =
+      getExistingResultIdFromStorage(typebotIdFromProps);
+    const { data, error } = await startChatQuery({
+      stripeRedirectStatus: urlParams.get("redirect_status") ?? undefined,
       typebot: props.typebot,
       apiHost: props.apiHost,
-      isPreview: props.isPreview ?? false,
-      resultId: isNotEmpty(props.resultId)
-        ? props.resultId
-        : getExistingResultIdFromStorage(typebotIdFromProps),
-      startGroupId: props.startGroupId,
+      isPreview,
+      resultId: isNotEmpty(props.resultId) ? props.resultId : resultIdInStorage,
       prefilledVariables: {
         ...prefilledVariables,
         ...props.prefilledVariables,
       },
-    })
-    if (error && 'code' in error && typeof error.code === 'string') {
-      if (typeof props.typebot !== 'string' || (props.isPreview ?? false)) {
+      startFrom: props.startFrom,
+      sessionId: props.sessionId,
+    });
+    if (error instanceof HTTPError) {
+      if (isPreview) {
         return setError(
-          new Error('An error occurred while loading the bot.', {
-            cause: error.message,
-          })
-        )
+          new Error(`An error occurred while loading the bot.`, {
+            cause: {
+              status: error.response.status,
+              body: await error.response.json(),
+            },
+          }),
+        );
       }
-      if (['BAD_REQUEST', 'FORBIDDEN'].includes(error.code))
-        return setError(new Error('This bot is now closed.'))
-      if (error.code === 'NOT_FOUND')
-        return setError(new Error("The bot you're looking for doesn't exist."))
+      if (error.response.status === 400 || error.response.status === 403)
+        return setError(new Error("This bot is now closed."));
+      if (error.response.status === 404)
+        return setError(new Error("The bot you're looking for doesn't exist."));
+      return setError(
+        new Error(
+          `Error! Couldn't initiate the chat. (${error.response.statusText})`,
+        ),
+      );
+    }
+
+    if (error instanceof CorsError) {
+      return setError(new Error(error.message));
     }
 
     if (!data) {
-      if (error) console.error(error)
-      return setError(new Error("Error! Couldn't initiate the chat."))
+      if (error) {
+        console.error(error);
+        if (isPreview) {
+          return setError(
+            new Error(`Error! Could not reach server. Check your connection.`, {
+              cause: error,
+            }),
+          );
+        }
+      }
+      return setError(
+        new Error("Error! Could not reach server. Check your connection."),
+      );
     }
 
-    if (data.resultId && typebotIdFromProps)
-      setResultInStorage(data.typebot.settings.general.rememberUser?.storage)(
-        typebotIdFromProps,
-        data.resultId
-      )
-    setInitialChatReply(data)
-    setCustomCss(data.typebot.theme.customCss ?? '')
+    if (
+      data.resultId &&
+      typebotIdFromProps &&
+      (data.typebot.settings.general?.rememberUser?.isEnabled ??
+        defaultSettings.general.rememberUser.isEnabled)
+    ) {
+      if (resultIdInStorage && resultIdInStorage !== data.resultId)
+        wipeExistingChatStateInStorage(data.typebot.id);
+      const storage =
+        data.typebot.settings.general?.rememberUser?.storage ??
+        defaultSettings.general.rememberUser.storage;
+      setResultInStorage(storage)(typebotIdFromProps, data.resultId);
+      const initialChatInStorage = getInitialChatReplyFromStorage(
+        data.typebot.id,
+      );
+      if (
+        initialChatInStorage &&
+        initialChatInStorage.typebot.publishedAt &&
+        data.typebot.publishedAt
+      ) {
+        if (
+          new Date(initialChatInStorage.typebot.publishedAt).getTime() ===
+          new Date(data.typebot.publishedAt).getTime()
+        ) {
+          setInitialChatReply(initialChatInStorage);
+        } else {
+          // Restart chat by resetting remembered state
+          wipeExistingChatStateInStorage(data.typebot.id);
+          setInitialChatReply(data);
+          setInitialChatReplyInStorage(data, {
+            typebotId: data.typebot.id,
+            storage,
+          });
+        }
+      } else {
+        setInitialChatReply(data);
+        setInitialChatReplyInStorage(data, {
+          typebotId: data.typebot.id,
+          storage,
+        });
+      }
+      props.onChatStatePersisted?.(true);
+    } else {
+      wipeExistingChatStateInStorage(data.typebot.id);
+      setInitialChatReply(data);
+      if (data.input?.id && props.onNewInputBlock)
+        props.onNewInputBlock(data.input);
+      if (data.logs) props.onNewLogs?.(data.logs);
+      props.onChatStatePersisted?.(false);
+    }
 
-    if (data.input?.id && props.onNewInputBlock)
-      props.onNewInputBlock({
-        id: data.input.id,
-        groupId: data.input.groupId,
-      })
-    if (data.logs) props.onNewLogs?.(data.logs)
-  }
+    setCustomCss(data.typebot.theme.customCss ?? "");
+  };
 
   createEffect(() => {
-    if (isNotDefined(props.typebot) || isInitialized()) return
-    initializeBot().then()
-  })
+    if (isNotDefined(props.typebot) || isInitialized()) return;
+    initializeBot().then();
+  });
 
   createEffect(() => {
-    if (isNotDefined(props.typebot) || typeof props.typebot === 'string') return
-    setCustomCss(props.typebot.theme.customCss ?? '')
-  })
+    if (isNotDefined(props.typebot) || typeof props.typebot === "string")
+      return;
+    setCustomCss(props.typebot.theme.customCss ?? "");
+    if (
+      props.typebot.theme.general?.progressBar?.isEnabled &&
+      initialChatReply() &&
+      !initialChatReply()?.typebot.theme.general?.progressBar?.isEnabled
+    ) {
+      setIsInitialized(false);
+      initializeBot().then();
+    }
+  });
 
   onCleanup(() => {
-    setIsInitialized(false)
-  })
+    setIsInitialized(false);
+  });
 
   return (
     <>
@@ -125,11 +230,11 @@ export const Bot = (props: BotProps & { class?: string }) => {
               typebot: {
                 ...initialChatReply.typebot,
                 settings:
-                  typeof props.typebot === 'string'
+                  typeof props.typebot === "string"
                     ? initialChatReply.typebot?.settings
                     : props.typebot?.settings,
                 theme:
-                  typeof props.typebot === 'string'
+                  typeof props.typebot === "string"
                     ? initialChatReply.typebot?.theme
                     : props.typebot?.theme,
               },
@@ -137,97 +242,142 @@ export const Bot = (props: BotProps & { class?: string }) => {
             context={{
               apiHost: props.apiHost,
               isPreview:
-                typeof props.typebot !== 'string' || (props.isPreview ?? false),
+                typeof props.typebot !== "string" || (props.isPreview ?? false),
               resultId: initialChatReply.resultId,
               sessionId: initialChatReply.sessionId,
               typebot: initialChatReply.typebot,
+              storage:
+                initialChatReply.typebot.settings.general?.rememberUser
+                  ?.isEnabled &&
+                !(
+                  typeof props.typebot !== "string" ||
+                  (props.isPreview ?? false)
+                )
+                  ? (initialChatReply.typebot.settings.general?.rememberUser
+                      ?.storage ?? defaultSettings.general.rememberUser.storage)
+                  : undefined,
             }}
+            progressBarRef={props.progressBarRef}
             onNewInputBlock={props.onNewInputBlock}
             onNewLogs={props.onNewLogs}
             onAnswer={props.onAnswer}
             onEnd={props.onEnd}
+            onScriptExecutionSuccess={props.onScriptExecutionSuccess}
           />
         )}
       </Show>
     </>
-  )
-}
+  );
+};
 
 type BotContentProps = {
-  initialChatReply: InitialChatReply
-  context: BotContext
-  class?: string
-  onNewInputBlock?: (block: { id: string; groupId: string }) => void
-  onAnswer?: (answer: { message: string; blockId: string }) => void
-  onEnd?: () => void
-  onNewLogs?: (logs: OutgoingLog[]) => void
-}
+  initialChatReply: StartChatResponse;
+  context: BotContext;
+  class?: string;
+  progressBarRef?: HTMLDivElement;
+  onNewInputBlock?: (inputBlock: InputBlock) => void;
+  onAnswer?: (answer: { message: string; blockId: string }) => void;
+  onEnd?: () => void;
+  onNewLogs?: (logs: OutgoingLog[]) => void;
+  onScriptExecutionSuccess?: (message: string) => void;
+};
 
 const BotContent = (props: BotContentProps) => {
-  let botContainer: HTMLDivElement | undefined
+  const [progressValue, setProgressValue] = persist(
+    createSignal<number | undefined>(props.initialChatReply.progress),
+    {
+      storage: props.context.storage,
+      key: `typebot-${props.context.typebot.id}-progressValue`,
+    },
+  );
+  let botContainerElement: HTMLDivElement | undefined;
 
   const resizeObserver = new ResizeObserver((entries) => {
-    return setIsMobile(entries[0].target.clientWidth < 400)
-  })
-
-  const injectCustomFont = () => {
-    const existingFont = document.getElementById('bot-font')
-    if (
-      existingFont
-        ?.getAttribute('href')
-        ?.includes(
-          props.initialChatReply.typebot?.theme?.general?.font ?? 'Open Sans'
-        )
-    )
-      return
-    const font = document.createElement('link')
-    font.href = `https://fonts.bunny.net/css2?family=${
-      props.initialChatReply.typebot?.theme?.general?.font ?? 'Open Sans'
-    }:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap');')`
-    font.rel = 'stylesheet'
-    font.id = 'bot-font'
-    document.head.appendChild(font)
-  }
+    return setIsMobile((entries[0]?.target.clientWidth ?? 0) < 400);
+  });
 
   onMount(() => {
-    if (!botContainer) return
-    resizeObserver.observe(botContainer)
-  })
+    if (!botContainerElement) return;
+    setBotContainer(botContainerElement);
+    resizeObserver.observe(botContainerElement);
+    setBotContainerHeight(`${botContainerElement.clientHeight}px`);
+  });
 
   createEffect(() => {
-    injectCustomFont()
-    if (!botContainer) return
-    setCssVariablesValue(props.initialChatReply.typebot.theme, botContainer)
-  })
+    injectFont(
+      props.initialChatReply.typebot.theme.general?.font ?? {
+        type: defaultFontType,
+        family: defaultFontFamily,
+      },
+    );
+    if (!botContainerElement) return;
+    setCssVariablesValue(
+      props.initialChatReply.typebot.theme,
+      botContainerElement,
+      props.context.isPreview,
+    );
+  });
 
   onCleanup(() => {
-    if (!botContainer) return
-    resizeObserver.unobserve(botContainer)
-  })
+    if (!botContainerElement) return;
+    resizeObserver.unobserve(botContainerElement);
+  });
 
   return (
     <div
-      ref={botContainer}
-      class={
-        'relative flex w-full h-full text-base overflow-hidden bg-cover bg-center flex-col items-center typebot-container ' +
-        props.class
-      }
+      ref={botContainerElement}
+      class={clsx(
+        "relative flex w-full h-full text-base overflow-hidden flex-col justify-center items-center typebot-container",
+        props.class,
+      )}
     >
-      <div class="flex w-full h-full justify-center">
-        <ConversationContainer
-          context={props.context}
-          initialChatReply={props.initialChatReply}
-          onNewInputBlock={props.onNewInputBlock}
-          onAnswer={props.onAnswer}
-          onEnd={props.onEnd}
-          onNewLogs={props.onNewLogs}
-        />
-      </div>
       <Show
-        when={props.initialChatReply.typebot.settings.general.isBrandingEnabled}
+        when={
+          isDefined(progressValue()) &&
+          props.initialChatReply.typebot.theme.general?.progressBar?.isEnabled
+        }
       >
-        <LiteBadge botContainer={botContainer} />
+        <Show
+          when={
+            props.progressBarRef &&
+            (props.initialChatReply.typebot.theme.general?.progressBar
+              ?.position ?? defaultProgressBarPosition) === "fixed"
+          }
+          fallback={<ProgressBar value={progressValue() as number} />}
+        >
+          <Portal mount={props.progressBarRef}>
+            <ProgressBar value={progressValue() as number} />
+          </Portal>
+        </Show>
       </Show>
+      <ConversationContainer
+        context={props.context}
+        initialChatReply={props.initialChatReply}
+        onNewInputBlock={props.onNewInputBlock}
+        onAnswer={props.onAnswer}
+        onEnd={props.onEnd}
+        onNewLogs={props.onNewLogs}
+        onProgressUpdate={setProgressValue}
+        onScriptExecutionSuccess={props.onScriptExecutionSuccess}
+      />
+      <Show
+        when={
+          props.initialChatReply.typebot.settings.general?.isBrandingEnabled
+        }
+      >
+        <LiteBadge botContainer={botContainerElement} />
+      </Show>
+      <Toaster toaster={toaster}>
+        {(toast) => (
+          <Toast.Root>
+            <Toast.Title>{toast().title}</Toast.Title>
+            <Toast.Description>{toast().description}</Toast.Description>
+            <Toast.CloseTrigger class="absolute right-2 top-2">
+              <CloseIcon class="w-4 h-4" />
+            </Toast.CloseTrigger>
+          </Toast.Root>
+        )}
+      </Toaster>
     </div>
-  )
-}
+  );
+};

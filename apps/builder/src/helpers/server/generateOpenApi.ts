@@ -1,15 +1,17 @@
-import { generateOpenApiDocument } from 'trpc-openapi'
-import { writeFileSync } from 'fs'
-import { trpcRouter } from './routers/v1/trpcRouter'
+import { writeFileSync } from "fs";
+import { generateOpenApiDocument } from "@typebot.io/trpc-openapi/generator";
+import { publicRouter } from "./routers/publicRouter";
 
-const openApiDocument = generateOpenApiDocument(trpcRouter, {
-  title: 'Builder API',
-  version: '1.0.0',
-  baseUrl: 'https://app.typebot.io/api/v1',
-  docsUrl: 'https://docs.typebot.io/api',
-})
+const openApiDocument = generateOpenApiDocument(publicRouter, {
+  title: "Builder API",
+  version: "1.0.0",
+  baseUrl: "https://app.typebot.io/api",
+  docsUrl: "https://docs.typebot.io/api-reference",
+});
 
 writeFileSync(
-  './openapi/builder/_spec_.json',
-  JSON.stringify(openApiDocument, null, 2)
-)
+  "./openapi/builder.json",
+  JSON.stringify(openApiDocument, null, 2),
+);
+
+process.exit();

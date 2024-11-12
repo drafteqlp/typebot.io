@@ -1,35 +1,47 @@
-import { RadioButtons } from '@/components/inputs/RadioButtons'
-import { Stack, Text } from '@chakra-ui/react'
-import { Background, BackgroundType } from '@typebot.io/schemas'
-import React from 'react'
-import { BackgroundContent } from './BackgroundContent'
+import { RadioButtons } from "@/components/inputs/RadioButtons";
+import { Stack } from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import {
+  BackgroundType,
+  defaultBackgroundType,
+} from "@typebot.io/theme/constants";
+import type { Background } from "@typebot.io/theme/schemas";
+import React from "react";
+import { BackgroundContent } from "./BackgroundContent";
 
 type Props = {
-  background?: Background
-  onBackgroundChange: (newBackground: Background) => void
-}
-
-const defaultBackgroundType = BackgroundType.NONE
+  background?: Background;
+  onBackgroundChange: (newBackground: Background) => void;
+};
 
 export const BackgroundSelector = ({
   background,
   onBackgroundChange,
 }: Props) => {
+  const { t } = useTranslate();
+
   const handleBackgroundTypeChange = (type: BackgroundType) =>
-    background &&
-    onBackgroundChange({ ...background, type, content: undefined })
+    onBackgroundChange({ ...background, type, content: undefined });
 
   const handleBackgroundContentChange = (content: string) =>
-    background && onBackgroundChange({ ...background, content })
+    onBackgroundChange({ ...background, content });
 
   return (
     <Stack spacing={4}>
-      <Text>Background</Text>
       <RadioButtons
         options={[
-          BackgroundType.COLOR,
-          BackgroundType.IMAGE,
-          BackgroundType.NONE,
+          {
+            label: t("theme.sideMenu.global.background.color.select"),
+            value: BackgroundType.COLOR,
+          },
+          {
+            label: t("theme.sideMenu.global.background.image.select"),
+            value: BackgroundType.IMAGE,
+          },
+          {
+            label: t("theme.sideMenu.global.background.none.select"),
+            value: BackgroundType.NONE,
+          },
         ]}
         value={background?.type ?? defaultBackgroundType}
         onSelect={handleBackgroundTypeChange}
@@ -39,5 +51,5 @@ export const BackgroundSelector = ({
         onBackgroundContentChange={handleBackgroundContentChange}
       />
     </Stack>
-  )
-}
+  );
+};

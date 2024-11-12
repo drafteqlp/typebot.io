@@ -1,4 +1,4 @@
-import { NumberInput, TextInput } from '@/components/inputs'
+import { NumberInput, TextInput } from "@/components/inputs";
 import {
   Accordion,
   AccordionButton,
@@ -7,54 +7,54 @@ import {
   AccordionPanel,
   Box,
   Stack,
-} from '@chakra-ui/react'
-import { GoogleAnalyticsOptions } from '@typebot.io/schemas'
-import React from 'react'
+} from "@chakra-ui/react";
+import type { GoogleAnalyticsBlock } from "@typebot.io/blocks-integrations/googleAnalytics/schema";
+import React from "react";
 
 type Props = {
-  options?: GoogleAnalyticsOptions
-  onOptionsChange: (options: GoogleAnalyticsOptions) => void
-}
+  options?: GoogleAnalyticsBlock["options"];
+  onOptionsChange: (options: GoogleAnalyticsBlock["options"]) => void;
+};
 
 export const GoogleAnalyticsSettings = ({
   options,
   onOptionsChange,
 }: Props) => {
   const updateTrackingId = (trackingId: string) =>
-    onOptionsChange({ ...options, trackingId })
+    onOptionsChange({ ...options, trackingId });
 
   const updateCategory = (category: string) =>
-    onOptionsChange({ ...options, category })
+    onOptionsChange({ ...options, category });
 
   const updateAction = (action: string) =>
-    onOptionsChange({ ...options, action })
+    onOptionsChange({ ...options, action });
 
-  const updateLabel = (label: string) => onOptionsChange({ ...options, label })
+  const updateLabel = (label: string) => onOptionsChange({ ...options, label });
 
   const updateValue = (value: number | `{{${string}}}` | undefined) =>
     onOptionsChange({
       ...options,
       value,
-    })
+    });
 
   const updateSendTo = (sendTo?: string) =>
     onOptionsChange({
       ...options,
       sendTo,
-    })
+    });
 
   return (
     <Stack spacing={4}>
       <TextInput
         label="Measurement ID:"
         moreInfoTooltip="Can be found by clicking on your data stream in Google Analytics dashboard"
-        defaultValue={options?.trackingId ?? ''}
+        defaultValue={options?.trackingId}
         placeholder="G-123456..."
         onChange={updateTrackingId}
       />
       <TextInput
         label="Event action:"
-        defaultValue={options?.action ?? ''}
+        defaultValue={options?.action}
         placeholder="Example: conversion"
         onChange={updateAction}
       />
@@ -71,13 +71,13 @@ export const GoogleAnalyticsSettings = ({
           <AccordionPanel pb={4} as={Stack} spacing="6">
             <TextInput
               label="Event category:"
-              defaultValue={options?.category ?? ''}
+              defaultValue={options?.category}
               placeholder="Example: Typebot"
               onChange={updateCategory}
             />
             <TextInput
               label="Event label:"
-              defaultValue={options?.label ?? ''}
+              defaultValue={options?.label}
               placeholder="Example: Campaign Z"
               onChange={updateLabel}
             />
@@ -91,7 +91,7 @@ export const GoogleAnalyticsSettings = ({
             <TextInput
               label="Send to:"
               moreInfoTooltip="Useful to send a conversion event to Google Ads"
-              defaultValue={options?.sendTo?.toString() ?? ''}
+              defaultValue={options?.sendTo?.toString()}
               placeholder="Example: AW-123456789"
               onChange={updateSendTo}
             />
@@ -99,5 +99,5 @@ export const GoogleAnalyticsSettings = ({
         </AccordionItem>
       </Accordion>
     </Stack>
-  )
-}
+  );
+};

@@ -1,50 +1,65 @@
-import { TextInput } from '@/components/inputs'
-import { VariableSearchInput } from '@/components/inputs/VariableSearchInput'
-import { FormLabel, Stack } from '@chakra-ui/react'
-import { UrlInputOptions, Variable } from '@typebot.io/schemas'
-import React from 'react'
+import { TextInput } from "@/components/inputs";
+import { VariableSearchInput } from "@/components/inputs/VariableSearchInput";
+import { FormLabel, Stack } from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import { defaultUrlInputOptions } from "@typebot.io/blocks-inputs/url/constants";
+import type { UrlInputBlock } from "@typebot.io/blocks-inputs/url/schema";
+import type { Variable } from "@typebot.io/variables/schemas";
+import React from "react";
 
 type Props = {
-  options: UrlInputOptions
-  onOptionsChange: (options: UrlInputOptions) => void
-}
+  options: UrlInputBlock["options"];
+  onOptionsChange: (options: UrlInputBlock["options"]) => void;
+};
 
 export const UrlInputSettings = ({ options, onOptionsChange }: Props) => {
+  const { t } = useTranslate();
   const handlePlaceholderChange = (placeholder: string) =>
-    onOptionsChange({ ...options, labels: { ...options.labels, placeholder } })
+    onOptionsChange({
+      ...options,
+      labels: { ...options?.labels, placeholder },
+    });
   const handleButtonLabelChange = (button: string) =>
-    onOptionsChange({ ...options, labels: { ...options.labels, button } })
+    onOptionsChange({ ...options, labels: { ...options?.labels, button } });
   const handleVariableChange = (variable?: Variable) =>
-    onOptionsChange({ ...options, variableId: variable?.id })
+    onOptionsChange({ ...options, variableId: variable?.id });
   const handleRetryMessageChange = (retryMessageContent: string) =>
-    onOptionsChange({ ...options, retryMessageContent })
+    onOptionsChange({ ...options, retryMessageContent });
 
   return (
     <Stack spacing={4}>
       <TextInput
-        label="Placeholder:"
-        defaultValue={options.labels.placeholder}
+        label={t("blocks.inputs.settings.placeholder.label")}
+        defaultValue={
+          options?.labels?.placeholder ??
+          defaultUrlInputOptions.labels.placeholder
+        }
         onChange={handlePlaceholderChange}
       />
       <TextInput
-        label="Button label:"
-        defaultValue={options.labels.button}
+        label={t("blocks.inputs.settings.button.label")}
+        defaultValue={
+          options?.labels?.button ?? defaultUrlInputOptions.labels.button
+        }
         onChange={handleButtonLabelChange}
       />
       <TextInput
-        label="Retry message:"
-        defaultValue={options.retryMessageContent}
+        label={t("blocks.inputs.settings.retryMessage.label")}
+        defaultValue={
+          options?.retryMessageContent ??
+          defaultUrlInputOptions.retryMessageContent
+        }
         onChange={handleRetryMessageChange}
       />
       <Stack>
         <FormLabel mb="0" htmlFor="variable">
-          Save answer in a variable:
+          {t("blocks.inputs.settings.saveAnswer.label")}
         </FormLabel>
         <VariableSearchInput
-          initialVariableId={options.variableId}
+          initialVariableId={options?.variableId}
           onSelectVariable={handleVariableChange}
         />
       </Stack>
     </Stack>
-  )
-}
+  );
+};

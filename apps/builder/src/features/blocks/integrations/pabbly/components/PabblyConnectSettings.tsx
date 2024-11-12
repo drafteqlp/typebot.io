@@ -1,41 +1,36 @@
-import { Alert, AlertIcon, Button, Link, Stack, Text } from '@chakra-ui/react'
-import { ExternalLinkIcon } from '@/components/icons'
-import {
-  PabblyConnectBlock,
-  Webhook,
-  WebhookOptions,
-} from '@typebot.io/schemas'
-import React from 'react'
-import { WebhookAdvancedConfigForm } from '../../webhook/components/WebhookAdvancedConfigForm'
-import { TextInput } from '@/components/inputs'
+import { ExternalLinkIcon } from "@/components/icons";
+import { TextInput } from "@/components/inputs";
+import { Alert, AlertIcon, Button, Link, Stack, Text } from "@chakra-ui/react";
+import type { HttpRequest } from "@typebot.io/blocks-integrations/httpRequest/schema";
+import type { PabblyConnectBlock } from "@typebot.io/blocks-integrations/pabblyConnect/schema";
+import React from "react";
+import { HttpRequestAdvancedConfigForm } from "../../httpRequest/components/HttpRequestAdvancedConfigForm";
 
 type Props = {
-  block: PabblyConnectBlock
-  onOptionsChange: (options: WebhookOptions) => void
-}
+  block: PabblyConnectBlock;
+  onOptionsChange: (options: PabblyConnectBlock["options"]) => void;
+};
 
 export const PabblyConnectSettings = ({
   block: { id: blockId, options },
   onOptionsChange,
 }: Props) => {
-  const setLocalWebhook = async (newLocalWebhook: Webhook) => {
-    if (!options.webhook) return
+  const setLocalWebhook = async (newLocalWebhook: HttpRequest) => {
     onOptionsChange({
       ...options,
       webhook: newLocalWebhook,
-    })
-  }
+    });
+  };
 
   const updateUrl = (url: string) => {
-    if (!options.webhook) return
-    onOptionsChange({ ...options, webhook: { ...options.webhook, url } })
-  }
+    onOptionsChange({ ...options, webhook: { ...options?.webhook, url } });
+  };
 
-  const url = options.webhook?.url
+  const url = options?.webhook?.url;
 
   return (
     <Stack spacing={4}>
-      <Alert status={url ? 'success' : 'info'} rounded="md">
+      <Alert status={url ? "success" : "info"} rounded="md">
         <AlertIcon />
         {url ? (
           <>Your scenario is correctly configured 🚀</>
@@ -55,20 +50,18 @@ export const PabblyConnectSettings = ({
       </Alert>
       <TextInput
         placeholder="Paste webhook URL..."
-        defaultValue={url ?? ''}
+        defaultValue={url ?? ""}
         onChange={updateUrl}
         withVariableButton={false}
         debounceTimeout={0}
       />
-      {options.webhook && (
-        <WebhookAdvancedConfigForm
-          blockId={blockId}
-          webhook={options.webhook as Webhook}
-          options={options}
-          onWebhookChange={setLocalWebhook}
-          onOptionsChange={onOptionsChange}
-        />
-      )}
+      <HttpRequestAdvancedConfigForm
+        blockId={blockId}
+        httpRequest={options?.webhook}
+        options={options}
+        onHttpRequestChange={setLocalWebhook}
+        onOptionsChange={onOptionsChange}
+      />
     </Stack>
-  )
-}
+  );
+};

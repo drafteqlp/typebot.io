@@ -1,12 +1,13 @@
-import { computeEdgePath } from './computeEdgePath'
+import { computeEdgePath } from "./computeEdgePath";
 import {
+  type GetAnchorsPositionProps,
   getAnchorsPosition,
-  GetAnchorsPositionProps,
-} from './getAnchorsPosition'
+} from "./getAnchorsPosition";
 
 export const computeConnectingEdgePath = ({
   sourceGroupCoordinates,
   targetGroupCoordinates,
+  elementWidth,
   sourceTop,
   targetTop,
   graphScale,
@@ -14,9 +15,10 @@ export const computeConnectingEdgePath = ({
   const anchorsPosition = getAnchorsPosition({
     sourceGroupCoordinates,
     targetGroupCoordinates,
+    elementWidth,
     sourceTop,
     targetTop,
     graphScale,
-  })
-  return computeEdgePath(anchorsPosition)
-}
+  });
+  return computeEdgePath(anchorsPosition);
+};

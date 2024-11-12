@@ -1,30 +1,24 @@
-import { Stack } from '@chakra-ui/react'
-import { useWorkspace } from '@/features/workspace/WorkspaceProvider'
-import { Plan } from '@typebot.io/prisma'
-import React from 'react'
-import { InvoicesList } from './InvoicesList'
-import { ChangePlanForm } from './ChangePlanForm'
-import { UsageProgressBars } from './UsageProgressBars'
-import { CurrentSubscriptionSummary } from './CurrentSubscriptionSummary'
+import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
+import { Stack } from "@chakra-ui/react";
+import React from "react";
+import { ChangePlanForm } from "./ChangePlanForm";
+import { CurrentSubscriptionSummary } from "./CurrentSubscriptionSummary";
+import { InvoicesList } from "./InvoicesList";
+import { UsageProgressBars } from "./UsageProgressBars";
 
 export const BillingSettingsLayout = () => {
-  const { workspace } = useWorkspace()
+  const { workspace, currentRole } = useWorkspace();
 
-  if (!workspace) return null
+  if (!workspace) return null;
   return (
     <Stack spacing="10" w="full">
       <UsageProgressBars workspace={workspace} />
       <Stack spacing="4">
         <CurrentSubscriptionSummary workspace={workspace} />
-        {workspace.plan !== Plan.CUSTOM &&
-          workspace.plan !== Plan.LIFETIME &&
-          workspace.plan !== Plan.UNLIMITED &&
-          workspace.plan !== Plan.OFFERED && (
-            <ChangePlanForm workspace={workspace} />
-          )}
+        <ChangePlanForm workspace={workspace} currentRole={currentRole} />
       </Stack>
 
       {workspace.stripeId && <InvoicesList workspaceId={workspace.id} />}
     </Stack>
-  )
-}
+  );
+};

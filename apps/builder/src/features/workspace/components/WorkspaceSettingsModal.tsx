@@ -1,61 +1,69 @@
-import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  Stack,
-  Text,
-  Button,
-  Avatar,
-  Flex,
-} from '@chakra-ui/react'
+import { EmojiOrImageIcon } from "@/components/EmojiOrImageIcon";
 import {
   CreditCardIcon,
   HardDriveIcon,
   SettingsIcon,
   UsersIcon,
-} from '@/components/icons'
-import { EmojiOrImageIcon } from '@/components/EmojiOrImageIcon'
-import { User, Workspace, WorkspaceRole } from '@typebot.io/prisma'
-import { useState } from 'react'
-import { MembersList } from './MembersList'
-import { WorkspaceSettingsForm } from './WorkspaceSettingsForm'
-import { useWorkspace } from '../WorkspaceProvider'
-import packageJson from '../../../../../../package.json'
-import { UserPreferencesForm } from '@/features/account/components/UserPreferencesForm'
-import { MyAccountForm } from '@/features/account/components/MyAccountForm'
-import { BillingSettingsLayout } from '@/features/billing/components/BillingSettingsLayout'
-import { useTranslate } from '@tolgee/react'
+  WalletIcon,
+} from "@/components/icons";
+import { MyAccountForm } from "@/features/account/components/MyAccountForm";
+import { UserPreferencesForm } from "@/features/account/components/UserPreferencesForm";
+import { BillingSettingsLayout } from "@/features/billing/components/BillingSettingsLayout";
+import { CredentialsSettingsForm } from "@/features/credentials/components/CredentialsSettingsForm";
+import { useParentModal } from "@/features/graph/providers/ParentModalProvider";
+import {
+  Avatar,
+  Button,
+  Flex,
+  Modal,
+  ModalContent,
+  ModalOverlay,
+  Stack,
+  Text,
+} from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import { WorkspaceRole } from "@typebot.io/prisma/enum";
+import type { Prisma } from "@typebot.io/prisma/types";
+import { useState } from "react";
+import packageJson from "../../../../../../package.json";
+import { type WorkspaceInApp, useWorkspace } from "../WorkspaceProvider";
+import { MembersList } from "./MembersList";
+import { WorkspaceSettingsForm } from "./WorkspaceSettingsForm";
 
 type Props = {
-  isOpen: boolean
-  user: User
-  workspace: Workspace
-  onClose: () => void
-}
+  isOpen: boolean;
+  user: Prisma.User;
+  workspace: WorkspaceInApp;
+  defaultTab?: SettingsTab;
+  onClose: () => void;
+};
 
 type SettingsTab =
-  | 'my-account'
-  | 'user-settings'
-  | 'workspace-settings'
-  | 'members'
-  | 'billing'
+  | "my-account"
+  | "user-settings"
+  | "workspace-settings"
+  | "members"
+  | "billing"
+  | "credentials";
 
 export const WorkspaceSettingsModal = ({
   isOpen,
   user,
   workspace,
+  defaultTab = "my-account",
   onClose,
 }: Props) => {
-  const { t } = useTranslate()
-  const { currentRole } = useWorkspace()
-  const [selectedTab, setSelectedTab] = useState<SettingsTab>('my-account')
+  const { t } = useTranslate();
+  const { ref } = useParentModal();
+  const { currentRole } = useWorkspace();
+  const [selectedTab, setSelectedTab] = useState<SettingsTab>(defaultTab);
 
-  const canEditWorkspace = currentRole === WorkspaceRole.ADMIN
+  const canEditWorkspace = currentRole === WorkspaceRole.ADMIN;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="4xl">
       <ModalOverlay />
-      <ModalContent minH="600px" flexDir="row">
+      <ModalContent minH="600px" flexDir="row" ref={ref}>
         <Stack
           spacing={8}
           w="180px"
@@ -69,8 +77,8 @@ export const WorkspaceSettingsModal = ({
                 {user.email}
               </Text>
               <Button
-                variant={selectedTab === 'my-account' ? 'solid' : 'ghost'}
-                onClick={() => setSelectedTab('my-account')}
+                variant={selectedTab === "my-account" ? "solid" : "ghost"}
+                onClick={() => setSelectedTab("my-account")}
                 leftIcon={
                   <Avatar
                     name={user.name ?? undefined}
@@ -82,29 +90,29 @@ export const WorkspaceSettingsModal = ({
                 justifyContent="flex-start"
                 pl="4"
               >
-                {t('workspace.settings.modal.menu.myAccount.label')}
+                {t("workspace.settings.modal.menu.myAccount.label")}
               </Button>
               <Button
-                variant={selectedTab === 'user-settings' ? 'solid' : 'ghost'}
-                onClick={() => setSelectedTab('user-settings')}
+                variant={selectedTab === "user-settings" ? "solid" : "ghost"}
+                onClick={() => setSelectedTab("user-settings")}
                 leftIcon={<SettingsIcon />}
                 size="sm"
                 justifyContent="flex-start"
                 pl="4"
               >
-                {t('workspace.settings.modal.menu.preferences.label')}
+                {t("workspace.settings.modal.menu.preferences.label")}
               </Button>
             </Stack>
             <Stack>
               <Text pl="4" color="gray.500">
-                {t('workspace.settings.modal.menu.workspace.label')}
+                {t("workspace.settings.modal.menu.workspace.label")}
               </Text>
               {canEditWorkspace && (
                 <Button
                   variant={
-                    selectedTab === 'workspace-settings' ? 'solid' : 'ghost'
+                    selectedTab === "workspace-settings" ? "solid" : "ghost"
                   }
-                  onClick={() => setSelectedTab('workspace-settings')}
+                  onClick={() => setSelectedTab("workspace-settings")}
                   leftIcon={
                     <EmojiOrImageIcon
                       icon={workspace.icon}
@@ -116,31 +124,44 @@ export const WorkspaceSettingsModal = ({
                   justifyContent="flex-start"
                   pl="4"
                 >
-                  {t('workspace.settings.modal.menu.settings.label')}
+                  {t("workspace.settings.modal.menu.settings.label")}
                 </Button>
               )}
-              <Button
-                variant={selectedTab === 'members' ? 'solid' : 'ghost'}
-                onClick={() => setSelectedTab('members')}
-                leftIcon={<UsersIcon />}
-                size="sm"
-                justifyContent="flex-start"
-                pl="4"
-              >
-                {t('workspace.settings.modal.menu.members.label')}
-              </Button>
               {canEditWorkspace && (
                 <Button
-                  variant={selectedTab === 'billing' ? 'solid' : 'ghost'}
-                  onClick={() => setSelectedTab('billing')}
+                  variant={selectedTab === "credentials" ? "solid" : "ghost"}
+                  onClick={() => setSelectedTab("credentials")}
+                  leftIcon={<WalletIcon />}
+                  size="sm"
+                  justifyContent="flex-start"
+                  pl="4"
+                >
+                  Credentials
+                </Button>
+              )}
+              {currentRole !== WorkspaceRole.GUEST && (
+                <Button
+                  variant={selectedTab === "members" ? "solid" : "ghost"}
+                  onClick={() => setSelectedTab("members")}
+                  leftIcon={<UsersIcon />}
+                  size="sm"
+                  justifyContent="flex-start"
+                  pl="4"
+                >
+                  {t("workspace.settings.modal.menu.members.label")}
+                </Button>
+              )}
+              {canEditWorkspace && (
+                <Button
+                  variant={selectedTab === "billing" ? "solid" : "ghost"}
+                  onClick={() => setSelectedTab("billing")}
                   leftIcon={<CreditCardIcon />}
                   size="sm"
                   justifyContent="flex-start"
                   pl="4"
-                  overflow="scroll"
-                  className="hide-scrollbar"
+                  overflow="auto"
                 >
-                  {t('workspace.settings.modal.menu.billingAndUsage.label')}
+                  {t("workspace.settings.modal.menu.billingAndUsage.label")}
                 </Button>
               )}
             </Stack>
@@ -148,7 +169,7 @@ export const WorkspaceSettingsModal = ({
 
           <Flex justify="center" pt="10">
             <Text color="gray.500" fontSize="xs">
-              {t('workspace.settings.modal.menu.version.label', {
+              {t("workspace.settings.modal.menu.version.label", {
                 version: packageJson.version,
               })}
             </Text>
@@ -162,28 +183,30 @@ export const WorkspaceSettingsModal = ({
         )}
       </ModalContent>
     </Modal>
-  )
-}
+  );
+};
 
 const SettingsContent = ({
   tab,
   onClose,
 }: {
-  tab: SettingsTab
-  onClose: () => void
+  tab: SettingsTab;
+  onClose: () => void;
 }) => {
   switch (tab) {
-    case 'my-account':
-      return <MyAccountForm />
-    case 'user-settings':
-      return <UserPreferencesForm />
-    case 'workspace-settings':
-      return <WorkspaceSettingsForm onClose={onClose} />
-    case 'members':
-      return <MembersList />
-    case 'billing':
-      return <BillingSettingsLayout />
+    case "my-account":
+      return <MyAccountForm />;
+    case "user-settings":
+      return <UserPreferencesForm />;
+    case "workspace-settings":
+      return <WorkspaceSettingsForm onClose={onClose} />;
+    case "members":
+      return <MembersList />;
+    case "billing":
+      return <BillingSettingsLayout />;
+    case "credentials":
+      return <CredentialsSettingsForm />;
     default:
-      return null
+      return null;
   }
-}
+};

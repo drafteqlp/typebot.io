@@ -1,75 +1,32 @@
-import prisma from '@typebot.io/lib/prisma'
-import { authenticatedProcedure } from '@/helpers/server/trpc'
-import { TRPCError } from '@trpc/server'
-import Stripe from 'stripe'
-import { isDefined } from '@typebot.io/lib'
-import { z } from 'zod'
-import { invoiceSchema } from '@typebot.io/schemas/features/billing/invoice'
-import { isAdminWriteWorkspaceForbidden } from '@/features/workspace/helpers/isAdminWriteWorkspaceForbidden'
-import { env } from '@typebot.io/env'
+import { authenticatedProcedure } from "@/helpers/server/trpc";
+import { listInvoices as listInvoicesHandler } from "@typebot.io/billing/api/listInvoices";
+import { invoiceSchema } from "@typebot.io/billing/schemas/invoice";
+import { z } from "@typebot.io/zod";
 
 export const listInvoices = authenticatedProcedure
   .meta({
     openapi: {
-      method: 'GET',
-      path: '/billing/invoices',
+      method: "GET",
+      path: "/v1/billing/invoices",
       protect: true,
-      summary: 'List invoices',
-      tags: ['Billing'],
+      summary: "List invoices",
+      tags: ["Billing"],
     },
   })
   .input(
     z.object({
-      workspaceId: z.string(),
-    })
+      workspaceId: z
+        .string()
+        .describe(
+          "[Where to find my workspace ID?](../how-to#how-to-find-my-workspaceid)",
+        ),
+    }),
   )
   .output(
     z.object({
       invoices: z.array(invoiceSchema),
-    })
+    }),
   )
-  .query(async ({ input: { workspaceId }, ctx: { user } }) => {
-    if (!env.STRIPE_SECRET_KEY)
-      throw new TRPCError({
-        code: 'INTERNAL_SERVER_ERROR',
-        message: 'STRIPE_SECRET_KEY var is missing',
-      })
-    const workspace = await prisma.workspace.findFirst({
-      where: {
-        id: workspaceId,
-      },
-      select: {
-        stripeId: true,
-        members: {
-          select: {
-            userId: true,
-            role: true,
-          },
-        },
-      },
-    })
-    if (!workspace?.stripeId || isAdminWriteWorkspaceForbidden(workspace, user))
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Workspace not found',
-      })
-    const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: '2022-11-15',
-    })
-    const invoices = await stripe.invoices.list({
-      customer: workspace.stripeId,
-    })
-    return {
-      invoices: invoices.data
-        .filter(
-          (invoice) => isDefined(invoice.invoice_pdf) && isDefined(invoice.id)
-        )
-        .map((invoice) => ({
-          id: invoice.number as string,
-          url: invoice.invoice_pdf as string,
-          amount: invoice.subtotal,
-          currency: invoice.currency,
-          date: invoice.status_transitions.paid_at,
-        })),
-    }
-  })
+  .query(async ({ input: { workspaceId }, ctx: { user } }) =>
+    listInvoicesHandler({ workspaceId, user }),
+  );

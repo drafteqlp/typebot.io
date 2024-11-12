@@ -9,21 +9,22 @@ import {
   Tag,
   Text,
   useColorModeValue,
-} from '@chakra-ui/react'
-import { CollaborationType } from '@typebot.io/prisma'
-import React from 'react'
-import { convertCollaborationTypeEnumToReadable } from './CollaborationList'
+} from "@chakra-ui/react";
+import { useTranslate } from "@tolgee/react";
+import { CollaborationType } from "@typebot.io/prisma/enum";
+import React from "react";
+import { ReadableCollaborationType } from "./ReadableCollaborationType";
 
 type Props = {
-  image?: string
-  name?: string
-  email: string
-  type: CollaborationType
-  isGuest?: boolean
-  isOwner: boolean
-  onDeleteClick: () => void
-  onChangeCollaborationType: (type: CollaborationType) => void
-}
+  image?: string;
+  name?: string;
+  email: string;
+  type: CollaborationType;
+  isGuest?: boolean;
+  isOwner: boolean;
+  onDeleteClick: () => void;
+  onChangeCollaborationType: (type: CollaborationType) => void;
+};
 
 export const CollaboratorItem = ({
   email,
@@ -35,11 +36,12 @@ export const CollaboratorItem = ({
   onDeleteClick,
   onChangeCollaborationType,
 }: Props) => {
-  const hoverBgColor = useColorModeValue('gray.100', 'gray.700')
+  const { t } = useTranslate();
+  const hoverBgColor = useColorModeValue("gray.100", "gray.700");
   const handleEditClick = () =>
-    onChangeCollaborationType(CollaborationType.WRITE)
+    onChangeCollaborationType(CollaborationType.WRITE);
   const handleViewClick = () =>
-    onChangeCollaborationType(CollaborationType.READ)
+    onChangeCollaborationType(CollaborationType.READ);
   return (
     <Menu placement="bottom-end">
       <MenuButton _hover={{ backgroundColor: hoverBgColor }} borderRadius="md">
@@ -48,60 +50,66 @@ export const CollaboratorItem = ({
           name={name}
           image={image}
           isGuest={isGuest}
-          tag={convertCollaborationTypeEnumToReadable(type)}
+          type={type}
         />
       </MenuButton>
       {isOwner && (
         <MenuList shadow="lg">
           <MenuItem onClick={handleEditClick}>
-            {convertCollaborationTypeEnumToReadable(CollaborationType.WRITE)}
+            <ReadableCollaborationType type={CollaborationType.WRITE} />
           </MenuItem>
           <MenuItem onClick={handleViewClick}>
-            {convertCollaborationTypeEnumToReadable(CollaborationType.READ)}
+            <ReadableCollaborationType type={CollaborationType.READ} />
           </MenuItem>
           <MenuItem color="red.500" onClick={onDeleteClick}>
-            Remove
+            {t("remove")}
           </MenuItem>
         </MenuList>
       )}
     </Menu>
-  )
-}
+  );
+};
 
 export const CollaboratorIdentityContent = ({
   name,
-  tag,
+  type,
   isGuest = false,
   image,
   email,
 }: {
-  name?: string
-  tag?: string
-  image?: string
-  isGuest?: boolean
-  email: string
-}) => (
-  <HStack justifyContent="space-between" maxW="full" py="2" px="4">
-    <HStack minW={0} spacing={3}>
-      <Avatar name={name} src={image} size="sm" />
-      <Stack spacing={0} minW="0">
-        {name && (
-          <Text textAlign="left" fontSize="15px">
-            {name}
+  name?: string;
+  type: CollaborationType;
+  image?: string;
+  isGuest?: boolean;
+  email: string;
+}) => {
+  const { t } = useTranslate();
+
+  return (
+    <HStack justifyContent="space-between" maxW="full" py="2" px="4">
+      <HStack minW={0} spacing={3}>
+        <Avatar name={name} src={image} size="sm" />
+        <Stack spacing={0} minW="0">
+          {name && (
+            <Text textAlign="left" fontSize="15px">
+              {name}
+            </Text>
+          )}
+          <Text
+            color="gray.500"
+            fontSize={name ? "14px" : "inherit"}
+            noOfLines={1}
+          >
+            {email}
           </Text>
-        )}
-        <Text
-          color="gray.500"
-          fontSize={name ? '14px' : 'inherit'}
-          noOfLines={1}
-        >
-          {email}
-        </Text>
-      </Stack>
+        </Stack>
+      </HStack>
+      <HStack flexShrink={0}>
+        {isGuest && <Tag color="gray.400">{t("pending")}</Tag>}
+        <Tag>
+          <ReadableCollaborationType type={type} />
+        </Tag>
+      </HStack>
     </HStack>
-    <HStack flexShrink={0}>
-      {isGuest && <Tag color="gray.400">Pending</Tag>}
-      <Tag>{tag}</Tag>
-    </HStack>
-  </HStack>
-)
+  );
+};
