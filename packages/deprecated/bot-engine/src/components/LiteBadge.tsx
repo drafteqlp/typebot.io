@@ -30,11 +30,7 @@ export const LiteBadge = () => {
   return (
     <a
       ref={liteBadge}
-<<<<<<< HEAD
-      href={'https://wedowish.com/?utm_source=litebadge'}
-=======
-      href={"https://www.typebot.io/?utm_source=litebadge"}
->>>>>>> 5546d112b35cf094b8817ba68de56e4aa208e6a3
+      href={"https://wedowish.com/?utm_source=litebadge"}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed py-1 px-2 bg-white z-50 rounded shadow-md lite-badge"

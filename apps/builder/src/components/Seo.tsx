@@ -19,11 +19,7 @@ export const Seo = ({
   currentUrl?: string;
   imagePreviewUrl?: string;
 }) => {
-<<<<<<< HEAD
-  const formattedTitle = `${title} | WeDoWish`
-=======
-  const formattedTitle = `${title} | Typebot`;
->>>>>>> 5546d112b35cf094b8817ba68de56e4aa208e6a3
+  const formattedTitle = `${title} | WeDoWish`;
 
   return (
     <Head>

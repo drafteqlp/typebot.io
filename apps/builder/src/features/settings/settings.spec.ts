@@ -29,26 +29,6 @@ test.describe
       });
     });
 
-<<<<<<< HEAD
-  test.describe('Typing emulation', () => {
-    test('should be fillable', async ({ page }) => {
-      const typebotId = createId()
-      await importTypebotInDatabase(getTestAsset('typebots/settings.json'), {
-        id: typebotId,
-      })
-      await page.goto(`/typebots/${typebotId}/settings`)
-      await expect(
-        page.locator('a:has-text("Made with WeDoWish.com")')
-      ).toHaveAttribute('href', 'https://wedowish.com/?utm_source=litebadge')
-      await page.click('button:has-text("Typing emulation")')
-      await page.fill('[data-testid="speed"] input', '350')
-      await page.fill('[data-testid="max-delay"] input', '1.5')
-      await page.click('text="Typing emulation" >> nth=-1')
-      await expect(page.locator('[data-testid="speed"]')).toBeHidden()
-      await expect(page.locator('[data-testid="max-delay"]')).toBeHidden()
-    })
-  })
-=======
     test.describe("Typing emulation", () => {
       test("should be fillable", async ({ page }) => {
         const typebotId = createId();
@@ -57,11 +37,8 @@ test.describe
         });
         await page.goto(`/typebots/${typebotId}/settings`);
         await expect(
-          page.locator('a:has-text("Made with Typebot")'),
-        ).toHaveAttribute(
-          "href",
-          "https://www.typebot.io/?utm_source=litebadge",
-        );
+          page.locator('a:has-text("Made with WeDoWish")'),
+        ).toHaveAttribute("href", "https://wedowish.com/?utm_source=litebadge");
         await page.click('button:has-text("Typing")');
         await page.fill('[data-testid="speed"] input', "350");
         await page.fill('[data-testid="max-delay"] input', "1.5");
@@ -70,7 +47,6 @@ test.describe
         await expect(page.locator('[data-testid="max-delay"]')).toBeHidden();
       });
     });
->>>>>>> 5546d112b35cf094b8817ba68de56e4aa208e6a3
 
     test.describe("Metadata", () => {
       test("should be fillable", async ({ page }) => {

@@ -40,11 +40,7 @@ export const LiteBadge = (props: Props) => {
   return (
     <a
       ref={liteBadge}
-<<<<<<< HEAD
-      href={'https://wedowish.com/?utm_source=litebadge'}
-=======
-      href={"https://www.typebot.io/?utm_source=litebadge"}
->>>>>>> 5546d112b35cf094b8817ba68de56e4aa208e6a3
+      href={"https://wedowish.com/?utm_source=litebadge"}
       target="_blank"
       rel="noopener noreferrer"
       class="lite-badge"

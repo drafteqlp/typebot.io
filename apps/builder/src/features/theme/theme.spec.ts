@@ -15,77 +15,12 @@ const guestAvatarUrl =
 const backgroundImageUrl =
   "https://images.unsplash.com/photo-1508739773434-c26b3d09e071?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2940&q=80";
 
-<<<<<<< HEAD
-test.describe.parallel('Theme page', () => {
-  test.describe('General', () => {
-    test('should reflect change in real-time', async ({ page }) => {
-      const typebotId = createId()
-      await importTypebotInDatabase(getTestAsset('typebots/theme.json'), {
-        id: typebotId,
-      })
-      await page.goto(`/typebots/${typebotId}/theme`)
-      await expect(page.getByRole('button', { name: 'Go' })).toBeVisible()
-
-      // Branding
-      await page.getByRole('button', { name: 'Global' }).click()
-      await expect(
-        page.locator('a:has-text("Made with WeDoWish.com")')
-      ).toHaveAttribute('href', 'https://wedowish.com/?utm_source=litebadge')
-      await page.click('text="Show Typebot brand"')
-      await expect(
-        page.locator('a:has-text("Made with WeDoWish.com")')
-      ).toBeHidden()
-
-      // Font
-      await page.getByRole('textbox').fill('Roboto Slab')
-      await expect(page.locator('.typebot-container')).toHaveCSS(
-        'font-family',
-        /"Roboto Slab"/
-      )
-
-      // BG color
-      await expect(page.locator('.typebot-container')).toHaveCSS(
-        'background-color',
-        'rgba(0, 0, 0, 0)'
-      )
-      await page.click('text=Color')
-      await page.waitForTimeout(100)
-      await page.getByRole('button', { name: 'Pick a color' }).click()
-      await page.fill('[aria-label="Color value"] >> nth=-1', '#2a9d8f')
-      await expect(page.locator('.typebot-container')).toHaveCSS(
-        'background-color',
-        'rgb(42, 157, 143)'
-      )
-      await page.click('text=Color')
-
-      await page.click('text="Image"')
-      await page.getByRole('button', { name: 'Select an image' }).click()
-      await page
-        .getByPlaceholder('Paste the image link...')
-        .fill(backgroundImageUrl)
-      await expect(
-        page.getByRole('img', { name: 'Background image' })
-      ).toHaveAttribute('src', backgroundImageUrl)
-      await expect(page.locator('.typebot-container')).toHaveCSS(
-        'background-image',
-        `url("${backgroundImageUrl}")`
-      )
-    })
-  })
-
-  test.describe('Chat', () => {
-    test('should reflect change in real-time', async ({ page }) => {
-      const typebotId = 'chat-theme-typebot'
-      try {
-        await importTypebotInDatabase(getTestAsset('typebots/theme.json'), {
-=======
 test.describe
   .parallel("Theme page", () => {
     test.describe("General", () => {
       test("should reflect change in real-time", async ({ page }) => {
         const typebotId = createId();
         await importTypebotInDatabase(getTestAsset("typebots/theme.json"), {
->>>>>>> 5546d112b35cf094b8817ba68de56e4aa208e6a3
           id: typebotId,
         });
         await page.goto(`/typebots/${typebotId}/theme`);
@@ -97,7 +32,7 @@ test.describe
           page.locator('a:has-text("Made with Typebot")'),
         ).toHaveAttribute(
           "href",
-          "https://www.typebot.io/?utm_source=litebadge",
+          "https://www.wedowish.com/?utm_source=litebadge",
         );
         await page.click('text="Show Typebot brand"');
         await expect(
@@ -358,14 +293,6 @@ test.describe("Free workspace", () => {
     await importTypebotInDatabase(getTestAsset("typebots/settings.json"), {
       id: typebotId,
       workspaceId: freeWorkspaceId,
-<<<<<<< HEAD
-    })
-    await page.goto(`/typebots/${typebotId}/theme`)
-    await expect(page.locator('text="What\'s your name?"')).toBeVisible()
-    await page.getByRole('button', { name: 'Global' }).click()
-    await expect(page.locator('[data-testid="starter-lock-tag"]')).toBeVisible()
-    await page.click('text=Show Typebot brand')
-=======
     });
     await page.goto(`/typebots/${typebotId}/theme`);
     await expect(page.locator('text="What\'s your name?"')).toBeVisible();
@@ -374,7 +301,6 @@ test.describe("Free workspace", () => {
       page.locator('[data-testid="starter-lock-tag"]'),
     ).toBeVisible();
     await page.click("text=Show Typebot brand");
->>>>>>> 5546d112b35cf094b8817ba68de56e4aa208e6a3
     await expect(
       page.locator(
         'text="You need to upgrade your plan in order to remove branding"',
