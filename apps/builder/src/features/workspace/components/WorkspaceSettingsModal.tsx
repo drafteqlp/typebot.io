@@ -6,11 +6,11 @@ import {
   UsersIcon,
   WalletIcon,
 } from "@/components/icons";
-import { MyAccountForm } from "@/features/account/components/MyAccountForm";
-import { UserPreferencesForm } from "@/features/account/components/UserPreferencesForm";
 import { BillingSettingsLayout } from "@/features/billing/components/BillingSettingsLayout";
 import { CredentialsSettingsForm } from "@/features/credentials/components/CredentialsSettingsForm";
 import { useParentModal } from "@/features/graph/providers/ParentModalProvider";
+import { MyAccountForm } from "@/features/user/components/MyAccountForm";
+import { UserPreferencesForm } from "@/features/user/components/UserPreferencesForm";
 import {
   Avatar,
   Button,
@@ -22,8 +22,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useTranslate } from "@tolgee/react";
-import { WorkspaceRole } from "@typebot.io/prisma/enum";
-import type { Prisma } from "@typebot.io/prisma/types";
+import type { ClientUser } from "@typebot.io/schemas/features/user/schema";
 import { useState } from "react";
 import packageJson from "../../../../../../package.json";
 import { type WorkspaceInApp, useWorkspace } from "../WorkspaceProvider";
@@ -32,7 +31,7 @@ import { WorkspaceSettingsForm } from "./WorkspaceSettingsForm";
 
 type Props = {
   isOpen: boolean;
-  user: Prisma.User;
+  user: ClientUser;
   workspace: WorkspaceInApp;
   defaultTab?: SettingsTab;
   onClose: () => void;
@@ -55,10 +54,8 @@ export const WorkspaceSettingsModal = ({
 }: Props) => {
   const { t } = useTranslate();
   const { ref } = useParentModal();
-  const { currentRole } = useWorkspace();
+  const { currentUserMode } = useWorkspace();
   const [selectedTab, setSelectedTab] = useState<SettingsTab>(defaultTab);
-
-  const canEditWorkspace = currentRole === WorkspaceRole.ADMIN;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="4xl">
@@ -102,12 +99,22 @@ export const WorkspaceSettingsModal = ({
               >
                 {t("workspace.settings.modal.menu.preferences.label")}
               </Button>
+              <Button
+                variant={selectedTab === "credentials" ? "solid" : "ghost"}
+                onClick={() => setSelectedTab("credentials")}
+                leftIcon={<WalletIcon />}
+                size="sm"
+                justifyContent="flex-start"
+                pl="4"
+              >
+                Credentials
+              </Button>
             </Stack>
             <Stack>
               <Text pl="4" color="gray.500">
                 {t("workspace.settings.modal.menu.workspace.label")}
               </Text>
-              {canEditWorkspace && (
+              {currentUserMode === "write" && (
                 <Button
                   variant={
                     selectedTab === "workspace-settings" ? "solid" : "ghost"
@@ -127,19 +134,8 @@ export const WorkspaceSettingsModal = ({
                   {t("workspace.settings.modal.menu.settings.label")}
                 </Button>
               )}
-              {canEditWorkspace && (
-                <Button
-                  variant={selectedTab === "credentials" ? "solid" : "ghost"}
-                  onClick={() => setSelectedTab("credentials")}
-                  leftIcon={<WalletIcon />}
-                  size="sm"
-                  justifyContent="flex-start"
-                  pl="4"
-                >
-                  Credentials
-                </Button>
-              )}
-              {currentRole !== WorkspaceRole.GUEST && (
+
+              {currentUserMode !== "guest" && (
                 <Button
                   variant={selectedTab === "members" ? "solid" : "ghost"}
                   onClick={() => setSelectedTab("members")}
@@ -151,7 +147,7 @@ export const WorkspaceSettingsModal = ({
                   {t("workspace.settings.modal.menu.members.label")}
                 </Button>
               )}
-              {canEditWorkspace && (
+              {currentUserMode === "write" && (
                 <Button
                   variant={selectedTab === "billing" ? "solid" : "ghost"}
                   onClick={() => setSelectedTab("billing")}

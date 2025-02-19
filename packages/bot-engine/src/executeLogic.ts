@@ -1,5 +1,6 @@
 import { LogicBlockType } from "@typebot.io/blocks-logic/constants";
 import type { LogicBlock } from "@typebot.io/blocks-logic/schema";
+import type { SessionState } from "@typebot.io/chat-session/schemas";
 import type { SetVariableHistoryItem } from "@typebot.io/variables/schemas";
 import { executeAbTest } from "./blocks/logic/abTest/executeAbTest";
 import { executeConditionBlock } from "./blocks/logic/condition/executeConditionBlock";
@@ -10,7 +11,6 @@ import { executeSetVariable } from "./blocks/logic/setVariable/executeSetVariabl
 import { executeTypebotLink } from "./blocks/logic/typebotLink/executeTypebotLink";
 import { executeWait } from "./blocks/logic/wait/executeWait";
 import { executeWebhookBlock } from "./blocks/logic/webhook/executeWebhookBlock";
-import type { SessionState } from "./schemas/chatSession";
 import type { ExecuteLogicResponse } from "./types";
 
 export const executeLogic =
@@ -33,7 +33,7 @@ export const executeLogic =
       case LogicBlockType.WAIT:
         return executeWait(state, block);
       case LogicBlockType.JUMP:
-        return executeJumpBlock(state, block.options);
+        return executeJumpBlock(state, block);
       case LogicBlockType.AB_TEST:
         return executeAbTest(state, block);
       case LogicBlockType.WEBHOOK:

@@ -9,6 +9,7 @@ import {
 } from "@typebot.io/blocks-core/helpers";
 import { InputBlockType } from "@typebot.io/blocks-inputs/constants";
 import type { InputBlock } from "@typebot.io/blocks-inputs/schema";
+import type { SessionState } from "@typebot.io/chat-session/schemas";
 import { env } from "@typebot.io/env";
 import type { Group } from "@typebot.io/groups/schemas";
 import { isNotEmpty } from "@typebot.io/lib/utils";
@@ -28,7 +29,6 @@ import {
   parseBubbleBlock,
 } from "./parseBubbleBlock";
 import type { ContinueChatResponse, RuntimeOptions } from "./schemas/api";
-import type { SessionState } from "./schemas/chatSession";
 import type { ExecuteIntegrationResponse, ExecuteLogicResponse } from "./types";
 
 type ContextProps = {
@@ -224,7 +224,11 @@ export const executeGroup = async (
     }
   }
 
-  if (!nextEdgeId && newSessionState.typebotsQueue.length === 1)
+  if (
+    !nextEdgeId &&
+    newSessionState.typebotsQueue.length === 1 &&
+    (newSessionState.typebotsQueue[0].queuedEdgeIds ?? []).length === 0
+  )
     return {
       messages,
       newSessionState,

@@ -2,12 +2,13 @@ import type {
   ContinueChatResponse,
   Message,
 } from "@typebot.io/bot-engine/schemas/api";
-import type { SessionState } from "@typebot.io/bot-engine/schemas/chatSession";
 import { startSession } from "@typebot.io/bot-engine/startSession";
+import type { SessionState } from "@typebot.io/chat-session/schemas";
 import {
   ComparisonOperators,
   LogicalOperator,
 } from "@typebot.io/conditions/constants";
+import type { WhatsAppCredentials } from "@typebot.io/credentials/schemas";
 import { isNotDefined } from "@typebot.io/lib/utils";
 import prisma from "@typebot.io/prisma";
 import type { Prisma } from "@typebot.io/prisma/types";
@@ -17,13 +18,14 @@ import type { PublicTypebot } from "@typebot.io/typebot/schemas/publicTypebot";
 import type { Typebot } from "@typebot.io/typebot/schemas/typebot";
 import type { SetVariableHistoryItem } from "@typebot.io/variables/schemas";
 import { WhatsAppError } from "./WhatsAppError";
-import type { WhatsAppCredentials } from "./schemas";
+import type { WhatsAppMessageReferral } from "./schemas";
 
 type Props = {
   incomingMessage?: Message;
   workspaceId: string;
   credentials: WhatsAppCredentials["data"] & Pick<WhatsAppCredentials, "id">;
   contact: NonNullable<SessionState["whatsApp"]>["contact"];
+  referral?: WhatsAppMessageReferral;
 };
 
 export const startWhatsAppSession = async ({
@@ -31,6 +33,7 @@ export const startWhatsAppSession = async ({
   workspaceId,
   credentials,
   contact,
+  referral,
 }: Props): Promise<
   ContinueChatResponse & {
     newSessionState: SessionState;
@@ -102,6 +105,12 @@ export const startWhatsAppSession = async ({
     initialSessionState: {
       whatsApp: {
         contact,
+        referral: referral
+          ? {
+              sourceId: referral.source_id,
+              ctwaClickId: referral.ctwa_clid,
+            }
+          : undefined,
       },
       expiryTimeout: sessionExpiryTimeoutHours * 60 * 60 * 1000,
     },

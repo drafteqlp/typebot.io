@@ -1,18 +1,25 @@
-import { Heading, Stack } from "@chakra-ui/react";
+import { DropdownList } from "@/components/DropdownList";
+import { FormLabel, HStack, Heading, Stack } from "@chakra-ui/react";
 import { useTranslate } from "@tolgee/react";
 import {
   defaultBlur,
   defaultButtonsBackgroundColor,
   defaultButtonsBorderThickness,
   defaultButtonsColor,
+  defaultButtonsInputLayout,
+  defaultGuestBubbleBorderColor,
+  defaultGuestBubbleBorderThickness,
   defaultGuestBubblesBackgroundColor,
   defaultGuestBubblesColor,
+  defaultHostBubbleBorderColor,
+  defaultHostBubbleBorderThickness,
   defaultHostBubblesBackgroundColor,
   defaultHostBubblesColor,
   defaultInputsBackgroundColor,
+  defaultInputsBorderColor,
+  defaultInputsBorderThickness,
   defaultInputsColor,
   defaultInputsPlaceholderColor,
-  defaultInputsShadow,
   defaultOpacity,
   defaultRoundness,
 } from "@typebot.io/theme/constants";
@@ -22,6 +29,7 @@ import type {
   GeneralTheme,
   Theme,
 } from "@typebot.io/theme/schemas";
+import type { TypebotV6 } from "@typebot.io/typebot/schemas/typebot";
 import React from "react";
 import { AvatarForm } from "./AvatarForm";
 import { ChatContainerForm } from "./ChatContainerForm";
@@ -29,7 +37,7 @@ import { ContainerThemeForm } from "./ContainerThemeForm";
 
 type Props = {
   workspaceId: string;
-  typebotId: string;
+  typebot: Pick<TypebotV6, "version" | "id">;
   generalBackground: GeneralTheme["background"];
   chatTheme: Theme["chat"];
   onChatThemeChange: (chatTheme: ChatTheme) => void;
@@ -37,7 +45,7 @@ type Props = {
 
 export const ChatThemeSettings = ({
   workspaceId,
-  typebotId,
+  typebot,
   chatTheme,
   generalBackground,
   onChatThemeChange,
@@ -74,6 +82,9 @@ export const ChatThemeSettings = ({
   const updateGuestAvatar = (guestAvatar: AvatarProps) =>
     onChatThemeChange({ ...chatTheme, guestAvatar });
 
+  const updateButtonsInputLayout = (layout: "wrap" | "vertical") =>
+    onChatThemeChange({ ...chatTheme, buttonsInput: { layout } });
+
   return (
     <Stack spacing={6}>
       <Stack borderWidth={1} rounded="md" p="4" spacing={4}>
@@ -87,7 +98,7 @@ export const ChatThemeSettings = ({
       <AvatarForm
         uploadFileProps={{
           workspaceId,
-          typebotId,
+          typebotId: typebot.id,
           fileName: "hostAvatar",
         }}
         title={t("theme.sideMenu.chat.botAvatar")}
@@ -98,7 +109,7 @@ export const ChatThemeSettings = ({
       <AvatarForm
         uploadFileProps={{
           workspaceId,
-          typebotId,
+          typebotId: typebot.id,
           fileName: "guestAvatar",
         }}
         title={t("theme.sideMenu.chat.userAvatar")}
@@ -112,11 +123,13 @@ export const ChatThemeSettings = ({
           theme={chatTheme?.hostBubbles}
           onThemeChange={updateHostBubbles}
           defaultTheme={{
-            backgroundColor: defaultHostBubblesBackgroundColor,
+            backgroundColor: defaultHostBubblesBackgroundColor[typebot.version],
             color: defaultHostBubblesColor,
             opacity: defaultOpacity,
             blur: defaultBlur,
             border: {
+              thickness: defaultHostBubbleBorderThickness[typebot.version],
+              color: defaultHostBubbleBorderColor,
               roundeness: defaultRoundness,
             },
           }}
@@ -130,11 +143,14 @@ export const ChatThemeSettings = ({
           theme={chatTheme?.guestBubbles}
           onThemeChange={updateGuestBubbles}
           defaultTheme={{
-            backgroundColor: defaultGuestBubblesBackgroundColor,
+            backgroundColor:
+              defaultGuestBubblesBackgroundColor[typebot.version],
             color: defaultGuestBubblesColor,
             opacity: defaultOpacity,
             blur: defaultBlur,
             border: {
+              thickness: defaultGuestBubbleBorderThickness[typebot.version],
+              color: defaultGuestBubbleBorderColor,
               roundeness: defaultRoundness,
             },
           }}
@@ -147,16 +163,16 @@ export const ChatThemeSettings = ({
           theme={chatTheme?.buttons}
           onThemeChange={updateButtons}
           defaultTheme={{
-            backgroundColor: defaultButtonsBackgroundColor,
+            backgroundColor: defaultButtonsBackgroundColor[typebot.version],
             color: defaultButtonsColor,
             opacity: defaultOpacity,
             blur: defaultBlur,
             border: {
               roundeness: defaultRoundness,
-              thickness: defaultButtonsBorderThickness,
+              thickness: defaultButtonsBorderThickness[typebot.version],
               color:
                 chatTheme?.buttons?.backgroundColor ??
-                defaultButtonsBackgroundColor,
+                defaultButtonsBackgroundColor[typebot.version],
             },
           }}
         />
@@ -172,14 +188,33 @@ export const ChatThemeSettings = ({
             backgroundColor: defaultInputsBackgroundColor,
             color: defaultInputsColor,
             placeholderColor: defaultInputsPlaceholderColor,
-            shadow: defaultInputsShadow,
             opacity: defaultOpacity,
             blur: defaultBlur,
             border: {
+              thickness: defaultInputsBorderThickness[typebot.version],
+              color: defaultInputsBorderColor[typebot.version],
               roundeness: defaultRoundness,
             },
           }}
         />
+      </Stack>
+      <Stack borderWidth={1} rounded="md" p="4" spacing={4}>
+        <Heading fontSize="lg">Buttons input</Heading>
+        <HStack justify="space-between">
+          <FormLabel mb="0" mr="0">
+            Layout:
+          </FormLabel>
+          <HStack>
+            <DropdownList
+              currentItem={
+                chatTheme?.buttonsInput?.layout ?? defaultButtonsInputLayout
+              }
+              onItemSelect={updateButtonsInputLayout}
+              items={["wrap", "vertical"]}
+              size="sm"
+            />
+          </HStack>
+        </HStack>
       </Stack>
     </Stack>
   );

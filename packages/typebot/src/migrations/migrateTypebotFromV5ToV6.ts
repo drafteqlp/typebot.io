@@ -1,6 +1,7 @@
 import { migrateBlocksFromV1ToV2 } from "@typebot.io/blocks-core/migrations/migrateBlocksFromV1ToV2";
+import { EventType } from "@typebot.io/events/constants";
 import { byId } from "@typebot.io/lib/utils";
-import { EventType } from "../schemas/events/constants";
+import { latestTypebotVersion } from "@typebot.io/schemas/versions";
 import type {
   PublicTypebotV5,
   PublicTypebotV6,
@@ -27,7 +28,7 @@ export const migrateTypebotFromV5ToV6 = async (
     groups: migrateGroups(
       typebot.groups.filter((g) => g.blocks.some((b) => b.type !== "start")),
     ),
-    version: "6",
+    version: latestTypebotVersion,
     events: [
       {
         id: startGroup.id,

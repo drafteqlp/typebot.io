@@ -1,12 +1,16 @@
+import {
+  draggableEventSchema,
+  startEventSchema,
+} from "@typebot.io/events/schemas";
 import { groupV5Schema, groupV6Schema } from "@typebot.io/groups/schemas";
 import type { Prisma } from "@typebot.io/prisma/types";
+import { typebotV6Versions } from "@typebot.io/schemas/versions";
 import { settingsSchema } from "@typebot.io/settings/schemas";
 import { themeSchema } from "@typebot.io/theme/schemas";
 import { variableSchema } from "@typebot.io/variables/schemas";
 import { z } from "@typebot.io/zod";
 import { preprocessTypebot } from "../preprocessTypebot";
 import { edgeSchema } from "./edge";
-import { startEventSchema } from "./events/start/schema";
 
 export const publicTypebotSchemaV5 = (
   z.preprocess(
@@ -35,9 +39,9 @@ export type PublicTypebotV5 = z.infer<typeof publicTypebotSchemaV5>;
 
 export const publicTypebotSchemaV6 = publicTypebotSchemaV5
   .extend({
-    version: z.literal("6"),
+    version: z.enum(typebotV6Versions),
     groups: z.array(groupV6Schema),
-    events: z.tuple([startEventSchema]),
+    events: z.tuple([startEventSchema]).rest(draggableEventSchema),
   })
   .openapi({
     ref: "publicTypebotV6",

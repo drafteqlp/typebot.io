@@ -1,10 +1,9 @@
 import {
   BoldIcon,
+  BracesIcon,
   ItalicIcon,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   LinkIcon,
   UnderlineIcon,
-  UserIcon,
 } from "@/components/icons";
 import {
   HStack,
@@ -38,7 +37,7 @@ export const TextEditorToolBar = ({
   };
   return (
     <HStack
-      bgColor={useColorModeValue("white", "gray.850")}
+      bgColor={useColorModeValue("white", "gray.900")}
       borderTopRadius="md"
       p={2}
       w="full"
@@ -50,7 +49,7 @@ export const TextEditorToolBar = ({
         aria-label="Insert variable"
         size="sm"
         onMouseDown={handleVariablesButtonMouseDown}
-        icon={<UserIcon />}
+        icon={<BracesIcon />}
       />
       <span data-testid="bold-button">
         <MarkToolbarButton

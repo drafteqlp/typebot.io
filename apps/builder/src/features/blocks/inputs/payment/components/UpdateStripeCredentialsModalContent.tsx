@@ -1,7 +1,7 @@
 import { MoreInfoTooltip } from "@/components/MoreInfoTooltip";
 import { TextLink } from "@/components/TextLink";
 import { TextInput } from "@/components/inputs";
-import { useUser } from "@/features/account/hooks/useUser";
+import { useUser } from "@/features/user/hooks/useUser";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
 import { trpc } from "@/lib/trpc";
 import {
@@ -18,7 +18,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useTranslate } from "@tolgee/react";
-import type { StripeCredentials } from "@typebot.io/blocks-inputs/payment/schema";
+import type { StripeCredentials } from "@typebot.io/credentials/schemas";
 import { isNotEmpty } from "@typebot.io/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -42,6 +42,7 @@ export const UpdateStripeCredentialsModalContent = ({
   const { data: existingCredentials } =
     trpc.credentials.getCredentials.useQuery(
       {
+        scope: "workspace",
         credentialsId,
         workspaceId: workspace!.id,
       },
@@ -107,6 +108,8 @@ export const UpdateStripeCredentialsModalContent = ({
     if (!user?.email || !workspace?.id || !stripeConfig) return;
     mutate({
       credentialsId,
+      scope: "workspace",
+      workspaceId: workspace.id,
       credentials: {
         data: {
           live: stripeConfig.live,
@@ -121,7 +124,6 @@ export const UpdateStripeCredentialsModalContent = ({
         },
         name: stripeConfig.name,
         type: "stripe",
-        workspaceId: workspace.id,
       },
     });
   };
@@ -219,7 +221,7 @@ export const UpdateStripeCredentialsModalContent = ({
         <ModalFooter>
           <Button
             type="submit"
-            colorScheme="blue"
+            colorScheme="orange"
             isDisabled={
               stripeConfig?.live.publicKey === "" ||
               stripeConfig?.name === "" ||

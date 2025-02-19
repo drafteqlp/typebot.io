@@ -1,10 +1,11 @@
 import { startChatQuery } from "@/queries/startChatQuery";
-import type { BotContext, OutgoingLog } from "@/types";
+import type { BotContext } from "@/types";
 import { CorsError } from "@/utils/CorsError";
 import { setBotContainerHeight } from "@/utils/botContainerHeightSignal";
 import { setBotContainer } from "@/utils/botContainerSignal";
 import { injectFont } from "@/utils/injectFont";
 import { setIsMobile } from "@/utils/isMobileSignal";
+import { mergeThemes } from "@/utils/mergeThemes";
 import { persist } from "@/utils/persist";
 import { setCssVariablesValue } from "@/utils/setCssVariablesValue";
 import {
@@ -22,7 +23,12 @@ import type {
   StartFrom,
 } from "@typebot.io/bot-engine/schemas/api";
 import { isDefined, isNotDefined, isNotEmpty } from "@typebot.io/lib/utils";
-import { defaultSettings } from "@typebot.io/settings/constants";
+import type { LogInSession } from "@typebot.io/logs/schemas";
+import { isTypebotVersionAtLeastV6 } from "@typebot.io/schemas/helpers/isTypebotVersionAtLeastV6";
+import {
+  defaultSettings,
+  defaultSystemMessages,
+} from "@typebot.io/settings/constants";
 import {
   defaultFontFamily,
   defaultFontType,
@@ -41,11 +47,13 @@ import { ProgressBar } from "./ProgressBar";
 import { CloseIcon } from "./icons/CloseIcon";
 
 export type BotProps = {
+  id?: string;
   typebot: string | any;
   isPreview?: boolean;
   resultId?: string;
   prefilledVariables?: Record<string, unknown>;
   apiHost?: string;
+  wsHost?: string;
   font?: Font;
   progressBarRef?: HTMLDivElement;
   startFrom?: StartFrom;
@@ -54,7 +62,7 @@ export type BotProps = {
   onAnswer?: (answer: { message: string; blockId: string }) => void;
   onInit?: () => void;
   onEnd?: () => void;
-  onNewLogs?: (logs: OutgoingLog[]) => void;
+  onNewLogs?: (logs: LogInSession[]) => void;
   onChatStatePersisted?: (isEnabled: boolean) => void;
   onScriptExecutionSuccess?: (message: string) => void;
 };
@@ -107,7 +115,7 @@ export const Bot = (props: BotProps & { class?: string }) => {
         );
       }
       if (error.response.status === 400 || error.response.status === 403)
-        return setError(new Error("This bot is now closed."));
+        return setError(new Error((await error.response.json()).message));
       if (error.response.status === 404)
         return setError(new Error("The bot you're looking for doesn't exist."));
       return setError(
@@ -241,6 +249,7 @@ export const Bot = (props: BotProps & { class?: string }) => {
             }}
             context={{
               apiHost: props.apiHost,
+              wsHost: props.wsHost,
               isPreview:
                 typeof props.typebot !== "string" || (props.isPreview ?? false),
               resultId: initialChatReply.resultId,
@@ -278,7 +287,7 @@ type BotContentProps = {
   onNewInputBlock?: (inputBlock: InputBlock) => void;
   onAnswer?: (answer: { message: string; blockId: string }) => void;
   onEnd?: () => void;
-  onNewLogs?: (logs: OutgoingLog[]) => void;
+  onNewLogs?: (logs: LogInSession[]) => void;
   onScriptExecutionSuccess?: (message: string) => void;
 };
 
@@ -293,7 +302,7 @@ const BotContent = (props: BotContentProps) => {
   let botContainerElement: HTMLDivElement | undefined;
 
   const resizeObserver = new ResizeObserver((entries) => {
-    return setIsMobile((entries[0]?.target.clientWidth ?? 0) < 400);
+    return setIsMobile((entries[0]?.target.clientWidth ?? 0) < 432);
   });
 
   onMount(() => {
@@ -311,11 +320,19 @@ const BotContent = (props: BotContentProps) => {
       },
     );
     if (!botContainerElement) return;
-    setCssVariablesValue(
-      props.initialChatReply.typebot.theme,
-      botContainerElement,
-      props.context.isPreview,
-    );
+    setCssVariablesValue({
+      theme: mergeThemes(
+        props.initialChatReply.typebot.theme,
+        props.initialChatReply.dynamicTheme,
+      ),
+      container: botContainerElement,
+      isPreview: props.context.isPreview,
+      typebotVersion: isTypebotVersionAtLeastV6(
+        props.initialChatReply.typebot.version,
+      )
+        ? props.initialChatReply.typebot.version
+        : "6",
+    });
   });
 
   onCleanup(() => {
@@ -375,6 +392,20 @@ const BotContent = (props: BotContentProps) => {
             <Toast.CloseTrigger class="absolute right-2 top-2">
               <CloseIcon class="w-4 h-4" />
             </Toast.CloseTrigger>
+            <Show when={toast().meta?.link as string}>
+              {(link) => (
+                <a
+                  href={link()}
+                  target="_blank"
+                  class="py-1 mt-2 px-4 justify-center text-sm font-semibold text-white focus:outline-none flex items-center disabled:opacity-50 disabled:cursor-not-allowed disabled:brightness-100 filter hover:brightness-90 active:brightness-75 typebot-button no-underline"
+                  rel="noreferrer"
+                >
+                  {props.initialChatReply.typebot.settings.general
+                    ?.systemMessages?.popupBlockedButtonLabel ??
+                    defaultSystemMessages.popupBlockedButtonLabel}
+                </a>
+              )}
+            </Show>
           </Toast.Root>
         )}
       </Toaster>

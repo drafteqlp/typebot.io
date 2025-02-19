@@ -1,4 +1,4 @@
-import { TextInput, Textarea } from "@/components/inputs";
+import { Textarea } from "@/components/inputs";
 import { CodeEditor } from "@/components/inputs/CodeEditor";
 import { RadioButtons } from "@/components/inputs/RadioButtons";
 import { Select } from "@/components/inputs/Select";
@@ -20,8 +20,10 @@ import {
   hiddenTypes,
   sessionOnlySetVariableOptions,
   valueTypes,
+  whatsAppSetVariableTypes,
 } from "@typebot.io/blocks-logic/setVariable/constants";
 import type { SetVariableBlock } from "@typebot.io/blocks-logic/setVariable/schema";
+import { timeZones } from "@typebot.io/lib/timeZones";
 import { isDefined } from "@typebot.io/lib/utils";
 import type { Variable } from "@typebot.io/variables/schemas";
 
@@ -96,10 +98,9 @@ export const SetVariableSettings = ({ options, onOptionsChange }: Props) => {
             items={setVarTypes.map((type) => ({
               label: type,
               value: type,
-              icon:
-                type === "Contact name" || type === "Phone number" ? (
-                  <WhatsAppLogo />
-                ) : undefined,
+              icon: whatsAppSetVariableTypes.includes(type as any) ? (
+                <WhatsAppLogo />
+              ) : undefined,
             }))}
             onSelect={updateValueType}
           />
@@ -108,7 +109,7 @@ export const SetVariableSettings = ({ options, onOptionsChange }: Props) => {
         {selectedVariable && !isSessionOnly && !isLinkedToAnswer && (
           <SwitchWithLabel
             key={selectedVariable.id}
-            label="Save in results?"
+            label="Save in results"
             moreInfoContent="By default, the variable is saved only for the user chat session. Check this option if you want to also store the variable in the typebot Results table."
             initialValue={!selectedVariable.isSessionVariable}
             onCheckChange={updateIsSessionVariable}
@@ -198,13 +199,21 @@ const SetVariableValue = ({
     });
   };
 
+  const updateSaveErrorInVariableId = (variable?: Pick<Variable, "id">) => {
+    if (options?.type && options.type !== "Custom") return;
+    onOptionsChange({
+      ...options,
+      saveErrorInVariableId: variable?.id,
+    });
+  };
+
   switch (options?.type) {
     case "Custom":
     case undefined:
       return (
         <>
           <SwitchWithLabel
-            label="Execute on client?"
+            label="Execute on client"
             moreInfoContent="Check this if you need access to client-only variables like `window` or `document`."
             initialValue={
               options?.isExecutedOnClient ??
@@ -224,11 +233,19 @@ const SetVariableValue = ({
               onSelect={updateIsCode}
             />
             {options?.isCode ? (
-              <CodeEditor
-                defaultValue={options?.expressionToEvaluate ?? ""}
-                onChange={updateExpression}
-                lang="javascript"
-              />
+              <>
+                <CodeEditor
+                  defaultValue={options?.expressionToEvaluate ?? ""}
+                  onChange={updateExpression}
+                  lang="javascript"
+                  withLineNumbers={true}
+                />
+                <VariableSearchInput
+                  label="Save error"
+                  initialVariableId={options.saveErrorInVariableId}
+                  onSelectVariable={updateSaveErrorInVariableId}
+                />
+              </>
             ) : (
               <Textarea
                 defaultValue={options?.expressionToEvaluate ?? ""}
@@ -301,12 +318,11 @@ const SetVariableValue = ({
     case "Yesterday":
     case "Tomorrow": {
       return (
-        <TextInput
-          direction="row"
-          label="Timezone"
-          onChange={(timeZone) => onOptionsChange({ ...options, timeZone })}
-          defaultValue={options.timeZone}
-          placeholder="Europe/Paris"
+        <Select
+          items={timeZones}
+          onSelect={(timeZone) => onOptionsChange({ ...options, timeZone })}
+          placeholder="Select time zone"
+          selectedItem={options?.timeZone}
         />
       );
     }
@@ -318,6 +334,8 @@ const SetVariableValue = ({
     case "Result ID":
     case "Empty":
     case "Transcript":
+    case "Referral Click ID":
+    case "Referral Source ID":
       return null;
   }
 };

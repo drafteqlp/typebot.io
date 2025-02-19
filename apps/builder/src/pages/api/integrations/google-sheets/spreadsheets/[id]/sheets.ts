@@ -1,6 +1,5 @@
 import { getAuthenticatedUser } from "@/features/auth/helpers/getAuthenticatedUser";
-import { getAuthenticatedGoogleClient } from "@/lib/googleSheets";
-import { setUser } from "@sentry/nextjs";
+import { getAuthenticatedGoogleClient } from "@typebot.io/credentials/getAuthenticatedGoogleClient";
 import {
   badRequest,
   methodNotAllowed,
@@ -14,17 +13,16 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const user = await getAuthenticatedUser(req, res);
   if (!user) return notAuthenticated(res);
 
-  setUser({ id: user.id });
   if (req.method === "GET") {
     const credentialsId = req.query.credentialsId as string | undefined;
     if (!credentialsId) return badRequest(res);
     const spreadsheetId = req.query.id as string;
-    const auth = await getAuthenticatedGoogleClient(user.id, credentialsId);
-    if (!auth)
+    const client = await getAuthenticatedGoogleClient(credentialsId);
+    if (!client)
       return res
         .status(404)
         .send({ message: "Couldn't find credentials in database" });
-    const doc = new GoogleSpreadsheet(spreadsheetId, auth.client);
+    const doc = new GoogleSpreadsheet(spreadsheetId, client);
     await doc.loadInfo();
     return res.send({
       sheets: (

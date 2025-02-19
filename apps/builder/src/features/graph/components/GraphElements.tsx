@@ -1,22 +1,22 @@
+import { EventNode } from "@/features/events/components/EventNode";
 import { isInputBlock } from "@typebot.io/blocks-core/helpers";
+import type { TEvent } from "@typebot.io/events/schemas";
 import type { GroupV6 } from "@typebot.io/groups/schemas";
 import type {
+  EdgeWithTotalUsers,
   TotalAnswers,
-  TotalVisitedEdges,
 } from "@typebot.io/schemas/features/analytics";
 import type { Edge } from "@typebot.io/typebot/schemas/edge";
-import type { TEvent } from "@typebot.io/typebot/schemas/types";
 import React, { memo } from "react";
 import { EndpointsProvider } from "../providers/EndpointsProvider";
 import { Edges } from "./edges/Edges";
-import { EventNode } from "./nodes/event";
 import { GroupNode } from "./nodes/group/GroupNode";
 
 type Props = {
   edges: Edge[];
   groups: GroupV6[];
   events: TEvent[];
-  totalVisitedEdges?: TotalVisitedEdges[];
+  edgesWithTotalUsers?: EdgeWithTotalUsers[];
   totalAnswers?: TotalAnswers[];
   onUnlockProPlanClick?: () => void;
 };
@@ -24,7 +24,7 @@ const GroupNodes = ({
   edges,
   groups,
   events,
-  totalVisitedEdges,
+  edgesWithTotalUsers,
   totalAnswers,
   onUnlockProPlanClick,
 }: Props) => {
@@ -39,7 +39,7 @@ const GroupNodes = ({
         edges={edges}
         groups={groups}
         totalAnswers={totalAnswers}
-        totalVisitedEdges={totalVisitedEdges}
+        edgesWithTotalUsers={edgesWithTotalUsers}
         inputBlockIds={inputBlockIds}
         onUnlockProPlanClick={onUnlockProPlanClick}
       />

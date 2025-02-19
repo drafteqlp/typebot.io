@@ -4,12 +4,14 @@
   "type": "module",
   "private": true,
   "exports": {
-    "./*": "./src/*.ts"
+    "./*": "./src/*.ts",
+    "./helpers/*": "./src/helpers/*.ts"
   },
   "dependencies": {
     "@typebot.io/lib": "workspace:*",
+    "@typebot.io/prisma": "workspace:*",
     "@typebot.io/zod": "workspace:*",
-    "@typebot.io/prisma": "workspace:*"
+    "@typebot.io/ui": "workspace:*"
   },
   "devDependencies": {
     "@typebot.io/tsconfig": "workspace:*"

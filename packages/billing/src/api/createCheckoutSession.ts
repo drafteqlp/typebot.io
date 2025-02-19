@@ -5,7 +5,6 @@ import type { User } from "@typebot.io/schemas/features/user/schema";
 import { isAdminWriteWorkspaceForbidden } from "@typebot.io/workspaces/isAdminWriteWorkspaceForbidden";
 import Stripe from "stripe";
 import { createCheckoutSessionUrl } from "../helpers/createCheckoutSessionUrl";
-import type { taxIdTypes } from "../taxIdTypes";
 
 type Props = {
   workspaceId: string;
@@ -14,7 +13,6 @@ type Props = {
   email: string;
   company: string;
   plan: "STARTER" | "PRO";
-  currency: "usd" | "eur";
   vat?: {
     type: string;
     value: string;
@@ -28,7 +26,6 @@ export const createCheckoutSession = async ({
   email,
   company,
   plan,
-  currency,
   vat,
 }: Props) => {
   if (!env.STRIPE_SECRET_KEY)
@@ -92,7 +89,6 @@ export const createCheckoutSession = async ({
     customerId: customer.id,
     userId: user.id,
     workspaceId,
-    currency,
     plan,
     returnUrl,
   });

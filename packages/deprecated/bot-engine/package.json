@@ -24,7 +24,6 @@
     "@typebot.io/blocks-logic": "workspace:*",
     "@typebot.io/conditions": "workspace:*",
     "@typebot.io/env": "workspace:*",
-    "@typebot.io/forge": "workspace:*",
     "@typebot.io/groups": "workspace:*",
     "@typebot.io/lib": "workspace:*",
     "@typebot.io/prisma": "workspace:*",
@@ -45,14 +44,13 @@
   "devDependencies": {
     "@typebot.io/tsconfig": "workspace:*",
     "@types/qs": "6.9.7",
-    "@types/react": "18.2.15",
+    "@types/react": "18.2.0",
     "@types/react-phone-number-input": "3.0.14",
     "@types/react-scroll": "1.8.6",
     "@types/react-transition-group": "4.4.5",
-    "autoprefixer": "10.4.14",
-    "postcss": "8.4.26",
-    "prettier": "2.8.8",
-    "tailwindcss": "3.3.3",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.5.1",
+    "tailwindcss": "3.4.17",
     "tsup": "8.3.0"
   },
   "peerDependencies": {

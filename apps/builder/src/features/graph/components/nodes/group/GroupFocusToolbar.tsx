@@ -1,4 +1,5 @@
 import { CopyIcon, InfoIcon, PlayIcon, TrashIcon } from "@/components/icons";
+import { isMac } from "@/helpers/isMac";
 import {
   HStack,
   IconButton,
@@ -16,7 +17,12 @@ export const GroupFocusToolbar = ({ groupId, onPlayClick }: Props) => {
   const { hasCopied, onCopy } = useClipboard(groupId);
 
   const dispatchCopyEvent = () => {
-    dispatchEvent(new KeyboardEvent("keydown", { key: "c", metaKey: true }));
+    dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "c",
+        [isMac() ? "metaKey" : "ctrlKey"]: true,
+      }),
+    );
   };
 
   const dispatchDeleteEvent = () => {
@@ -28,7 +34,7 @@ export const GroupFocusToolbar = ({ groupId, onPlayClick }: Props) => {
       rounded="md"
       spacing={0}
       borderWidth="1px"
-      bgColor={useColorModeValue("white", "gray.800")}
+      bgColor={useColorModeValue("white", "gray.900")}
       shadow="md"
     >
       <IconButton

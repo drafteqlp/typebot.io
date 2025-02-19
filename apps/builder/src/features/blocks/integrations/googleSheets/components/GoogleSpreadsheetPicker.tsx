@@ -6,7 +6,6 @@ import { isDefined } from "@typebot.io/lib/utils";
 import React, { useEffect, useState } from "react";
 import { GoogleSheetsLogo } from "./GoogleSheetsLogo";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const window: any;
 
 type Props = {
@@ -72,7 +71,11 @@ export const GoogleSpreadsheetPicker = ({
     if (!isPickerInitialized) throw new Error("Google Picker not inited");
 
     const picker = new window.google.picker.PickerBuilder()
-      .addView(window.google.picker.ViewId.SPREADSHEETS)
+      .addView(
+        new window.google.picker.View(
+          window.google.picker.ViewId.SPREADSHEETS,
+        ).setMimeTypes("application/vnd.google-apps.spreadsheet"),
+      )
       .setOAuthToken(data.accessToken)
       .setDeveloperKey(env.NEXT_PUBLIC_GOOGLE_SHEETS_API_KEY)
       .setCallback(pickerCallback)
@@ -93,7 +96,7 @@ export const GoogleSpreadsheetPicker = ({
       <Flex justifyContent="space-between">
         <HStack spacing={2}>
           <GoogleSheetsLogo />
-          <Text fontWeight="semibold">{spreadsheetData.name}</Text>
+          <Text fontWeight="medium">{spreadsheetData.name}</Text>
         </HStack>
         <IconButton
           size="sm"

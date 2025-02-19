@@ -1,6 +1,7 @@
 import { blockBaseSchema } from "@typebot.io/blocks-base/schemas";
 import { z } from "@typebot.io/zod";
 import { LogicBlockType } from "../constants";
+import { valueTypesWithNoOptions } from "./constants";
 
 const baseOptions = z.object({
   variableId: z.string().optional(),
@@ -8,18 +9,7 @@ const baseOptions = z.object({
 });
 
 const basicSetVariableOptionsSchema = baseOptions.extend({
-  type: z.enum([
-    "Today",
-    "Moment of the day",
-    "Empty",
-    "Environment name",
-    "User ID",
-    "Result ID",
-    "Random ID",
-    "Phone number",
-    "Contact name",
-    "Transcript",
-  ]),
+  type: z.enum(valueTypesWithNoOptions),
 });
 
 const popOrShiftSetVariableOptionsSchema = baseOptions.extend({
@@ -36,12 +26,14 @@ const initialSetVariableOptionsSchema = baseOptions.extend({
   type: z.undefined(),
   expressionToEvaluate: z.string().optional(),
   isCode: z.boolean().optional(),
+  saveErrorInVariableId: z.string().optional(),
 });
 
 const customSetVariableOptionsSchema = baseOptions.extend({
   type: z.literal("Custom"),
   expressionToEvaluate: z.string().optional(),
   isCode: z.boolean().optional(),
+  saveErrorInVariableId: z.string().optional(),
 });
 
 const mapListItemsOptionsSchema = baseOptions.extend({

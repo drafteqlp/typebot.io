@@ -1,15 +1,20 @@
 import type { PreviewMessageParams } from "../bubble/types";
 
-export type CommandData = {
+export type CommandArgs = {
+  id?: string;
+};
+
+export type CommandData = CommandArgs & {
   isFromTypebot: boolean;
 } & (
-  | {
-      command: "open" | "toggle" | "close" | "hidePreviewMessage" | "unmount";
-    }
-  | ShowMessageCommandData
-  | SetPrefilledVariablesCommandData
-  | SetInputValueCommandData
-);
+    | {
+        command: "open" | "toggle" | "close" | "hidePreviewMessage" | "unmount";
+      }
+    | ShowMessageCommandData
+    | SetPrefilledVariablesCommandData
+    | SetInputValueCommandData
+    | SendCommandCommandData
+  );
 
 export type ShowMessageCommandData = {
   command: "showPreviewMessage";
@@ -24,4 +29,9 @@ export type SetPrefilledVariablesCommandData = {
 export type SetInputValueCommandData = {
   command: "setInputValue";
   value: string;
+};
+
+export type SendCommandCommandData = {
+  command: "sendCommand";
+  text: string;
 };

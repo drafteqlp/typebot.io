@@ -10,10 +10,11 @@ import {
 } from "@chakra-ui/react";
 import { useTranslate } from "@tolgee/react";
 import type { BlockWithOptions } from "@typebot.io/blocks-core/schemas/schema";
+import type { TEventWithOptions } from "@typebot.io/events/schemas";
 import type { forgedBlocks } from "@typebot.io/forge-repository/definitions";
 
 type Props = {
-  blockType: BlockWithOptions["type"];
+  nodeType: BlockWithOptions["type"] | TEventWithOptions["type"];
   blockDef?: (typeof forgedBlocks)[keyof typeof forgedBlocks];
   isVideoOnboardingItemDisplayed: boolean;
   onExpandClick: () => void;
@@ -21,20 +22,20 @@ type Props = {
 };
 
 export const SettingsHoverBar = ({
-  blockType,
+  nodeType,
   blockDef,
   isVideoOnboardingItemDisplayed,
   onExpandClick,
   onVideoOnboardingClick,
 }: Props) => {
   const { t } = useTranslate();
-  const helpDocUrl = getHelpDocUrl(blockType, blockDef);
+  const helpDocUrl = getHelpDocUrl(nodeType, blockDef);
   return (
     <HStack
       rounded="md"
       spacing={0}
       borderWidth="1px"
-      bgColor={useColorModeValue("white", "gray.800")}
+      bgColor={useColorModeValue("white", "gray.900")}
       shadow="md"
     >
       <IconButton

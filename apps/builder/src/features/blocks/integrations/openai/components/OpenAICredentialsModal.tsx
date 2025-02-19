@@ -1,7 +1,7 @@
 import { TextLink } from "@/components/TextLink";
 import { TextInput } from "@/components/inputs/TextInput";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Alert,
@@ -16,6 +16,7 @@ import {
   ModalOverlay,
   Stack,
 } from "@chakra-ui/react";
+import type { Credentials } from "@typebot.io/credentials/schemas";
 import type React from "react";
 import { useState } from "react";
 
@@ -33,7 +34,6 @@ export const OpenAICredentialsModal = ({
   onNewCredentials,
 }: Props) => {
   const { workspace } = useWorkspace();
-  const { showToast } = useToast();
   const [apiKey, setApiKey] = useState("");
   const [name, setName] = useState("");
 
@@ -48,9 +48,8 @@ export const OpenAICredentialsModal = ({
     onMutate: () => setIsCreating(true),
     onSettled: () => setIsCreating(false),
     onError: (err) => {
-      showToast({
+      toast({
         description: err.message,
-        status: "error",
       });
     },
     onSuccess: (data) => {
@@ -64,14 +63,15 @@ export const OpenAICredentialsModal = ({
     e.preventDefault();
     if (!workspace) return;
     mutate({
+      scope: "workspace",
+      workspaceId: workspace.id,
       credentials: {
         type: "openai",
-        workspaceId: workspace.id,
         name,
         data: {
           apiKey,
         },
-      },
+      } as Credentials,
     });
   };
 
@@ -121,7 +121,7 @@ export const OpenAICredentialsModal = ({
               type="submit"
               isLoading={isCreating}
               isDisabled={apiKey === "" || name === ""}
-              colorScheme="blue"
+              colorScheme="orange"
             >
               Create
             </Button>

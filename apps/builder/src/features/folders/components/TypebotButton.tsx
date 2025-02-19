@@ -8,7 +8,7 @@ import {
 } from "@/features/graph/providers/GraphDndProvider";
 import { duplicateName } from "@/features/typebot/helpers/duplicateName";
 import { isMobile } from "@/helpers/isMobile";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc, trpcVanilla } from "@/lib/trpc";
 import {
   Alert,
@@ -22,6 +22,7 @@ import {
   Text,
   VStack,
   WrapItem,
+  useColorModeValue,
   useDisclosure,
 } from "@chakra-ui/react";
 import { T, useTranslate } from "@tolgee/react";
@@ -61,11 +62,9 @@ const TypebotButton = ({
     deps: [],
   });
 
-  const { showToast } = useToast();
-
   const { mutate: importTypebot } = trpc.typebot.importTypebot.useMutation({
     onError: (error) => {
-      showToast({ description: error.message });
+      toast({ description: error.message });
     },
     onSuccess: ({ typebot }) => {
       router.push(`/typebots/${typebot.id}/edit`);
@@ -74,7 +73,7 @@ const TypebotButton = ({
 
   const { mutate: deleteTypebot } = trpc.typebot.deleteTypebot.useMutation({
     onError: (error) => {
-      showToast({ description: error.message });
+      toast({ description: error.message });
     },
     onSuccess: () => {
       onTypebotUpdated();
@@ -84,7 +83,7 @@ const TypebotButton = ({
   const { mutate: unpublishTypebot } =
     trpc.typebot.unpublishTypebot.useMutation({
       onError: (error) => {
-        showToast({ description: error.message });
+        toast({ description: error.message });
       },
       onSuccess: () => {
         onTypebotUpdated();
@@ -148,10 +147,11 @@ const TypebotButton = ({
       whiteSpace="normal"
       opacity={draggedTypebot ? 0.3 : 1}
       cursor="pointer"
+      bgColor={useColorModeValue("white", "gray.900")}
     >
       {typebot.publishedTypebotId && (
         <Tag
-          colorScheme="blue"
+          colorScheme="orange"
           variant="solid"
           rounded="full"
           pos="absolute"
@@ -171,7 +171,7 @@ const TypebotButton = ({
             aria-label="Drag"
             cursor="grab"
             variant="ghost"
-            colorScheme="blue"
+            colorScheme="orange"
             size="sm"
           />
           <MoreButton

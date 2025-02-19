@@ -1,6 +1,6 @@
 import { ChevronLeftIcon, PlusIcon, TrashIcon } from "@/components/icons";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -24,6 +24,7 @@ type Props = Omit<ButtonProps, "type"> & {
   currentCredentialsId: string | undefined;
   onAddClick: () => void;
   onCredentialsSelect: (credentialId?: string) => void;
+  scope: "workspace" | "user";
 };
 
 export const ForgedCredentialsDropdown = ({
@@ -31,17 +32,23 @@ export const ForgedCredentialsDropdown = ({
   blockDef,
   onCredentialsSelect,
   onAddClick,
+  scope,
   ...props
 }: Props) => {
   const router = useRouter();
-  const { showToast } = useToast();
-  const { workspace, currentRole } = useWorkspace();
+  const { workspace, currentUserMode } = useWorkspace();
   const { data, refetch, isLoading } =
     trpc.credentials.listCredentials.useQuery(
-      {
-        workspaceId: workspace?.id as string,
-        type: blockDef.id as Credentials["type"],
-      },
+      scope === "workspace"
+        ? {
+            scope: "workspace",
+            workspaceId: workspace?.id as string,
+            type: blockDef.id as Credentials["type"],
+          }
+        : {
+            scope: "user",
+            type: blockDef.id as Credentials["type"],
+          },
       { enabled: !!workspace?.id },
     );
   const [isDeleting, setIsDeleting] = useState<string>();
@@ -51,7 +58,7 @@ export const ForgedCredentialsDropdown = ({
       setIsDeleting(credentialsId);
     },
     onError: (error) => {
-      showToast({
+      toast({
         description: error.message,
       });
     },
@@ -99,7 +106,18 @@ export const ForgedCredentialsDropdown = ({
     (credentialsId: string) => async (e: React.MouseEvent) => {
       if (!workspace) return;
       e.stopPropagation();
-      mutate({ workspaceId: workspace.id, credentialsId });
+      mutate(
+        scope === "workspace"
+          ? {
+              scope: "workspace",
+              workspaceId: workspace.id,
+              credentialsId,
+            }
+          : {
+              scope: "user",
+              credentialsId,
+            },
+      );
     };
 
   if (!data || data?.credentials.length === 0) {
@@ -109,7 +127,7 @@ export const ForgedCredentialsDropdown = ({
         textAlign="left"
         leftIcon={<PlusIcon />}
         onClick={onAddClick}
-        isDisabled={currentRole === "GUEST"}
+        isDisabled={currentUserMode === "guest"}
         isLoading={isLoading}
         {...props}
       >
@@ -160,7 +178,7 @@ export const ForgedCredentialsDropdown = ({
               />
             </MenuItem>
           ))}
-          {currentRole === "GUEST" ? null : (
+          {currentUserMode === "guest" ? null : (
             <MenuItem
               maxW="500px"
               overflow="hidden"

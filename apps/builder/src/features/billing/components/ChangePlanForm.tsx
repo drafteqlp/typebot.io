@@ -1,13 +1,12 @@
 import { TextLink } from "@/components/TextLink";
-import { useUser } from "@/features/account/hooks/useUser";
 import { ParentModalProvider } from "@/features/graph/providers/ParentModalProvider";
+import { useUser } from "@/features/user/hooks/useUser";
 import type { WorkspaceInApp } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import { HStack, Stack, Text } from "@chakra-ui/react";
 import { useTranslate } from "@tolgee/react";
-import { guessIfUserIsEuropean } from "@typebot.io/billing/helpers/guessIfUserIsEuropean";
-import { Plan, WorkspaceRole } from "@typebot.io/prisma/enum";
+import { Plan } from "@typebot.io/prisma/enum";
 import { useState } from "react";
 import type { PreCheckoutModalProps } from "./PreCheckoutModal";
 import { PreCheckoutModal } from "./PreCheckoutModal";
@@ -17,19 +16,18 @@ import { StripeClimateLogo } from "./StripeClimateLogo";
 
 type Props = {
   workspace: WorkspaceInApp;
-  currentRole?: WorkspaceRole;
+  currentUserMode?: "guest" | "read" | "write";
   excludedPlans?: ("STARTER" | "PRO")[];
 };
 
 export const ChangePlanForm = ({
   workspace,
-  currentRole,
+  currentUserMode,
   excludedPlans,
 }: Props) => {
   const { t } = useTranslate();
 
   const { user } = useUser();
-  const { showToast } = useToast();
   const [preCheckoutPlan, setPreCheckoutPlan] =
     useState<PreCheckoutModalProps["selectedSubscription"]>();
 
@@ -42,7 +40,7 @@ export const ChangePlanForm = ({
   const { mutate: updateSubscription, isLoading: isUpdatingSubscription } =
     trpc.billing.updateSubscription.useMutation({
       onError: (error) => {
-        showToast({
+        toast({
           description: error.message,
         });
       },
@@ -53,7 +51,7 @@ export const ChangePlanForm = ({
         }
         refetch();
         trpcContext.workspace.getWorkspace.invalidate();
-        showToast({
+        toast({
           status: "success",
           description: t("billing.updateSuccessToast.description", {
             plan: workspace?.plan,
@@ -68,9 +66,6 @@ export const ChangePlanForm = ({
     const newSubscription = {
       plan,
       workspaceId: workspace.id,
-      currency:
-        data?.subscription?.currency ??
-        (guessIfUserIsEuropean() ? "eur" : "usd"),
     } as const;
     if (workspace.stripeId) {
       updateSubscription({
@@ -94,7 +89,7 @@ export const ChangePlanForm = ({
 
   if (workspace.plan !== Plan.FREE && !isSubscribed) return null;
 
-  if (currentRole !== WorkspaceRole.ADMIN)
+  if (currentUserMode !== "write")
     return (
       <Text>
         Only workspace admins can change the subscription plan. Contact your

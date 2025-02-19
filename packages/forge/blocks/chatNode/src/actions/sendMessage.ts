@@ -1,4 +1,5 @@
 import { createAction, option } from "@typebot.io/forge";
+import { parseUnknownError } from "@typebot.io/lib/parseUnknownError";
 import { isDefined, isEmpty } from "@typebot.io/lib/utils";
 import ky, { HTTPError } from "ky";
 import { auth } from "../auth";
@@ -58,19 +59,21 @@ export const sendMessage = createAction({
 
           const item = mapping.item ?? "Message";
           if (item === "Message")
-            variables.set(mapping.variableId, res.message);
+            variables.set([{ id: mapping.variableId, value: res.message }]);
 
           if (item === "Thread ID")
-            variables.set(mapping.variableId, res.chat_session_id);
+            variables.set([
+              { id: mapping.variableId, value: res.chat_session_id },
+            ]);
         });
       } catch (error) {
         if (error instanceof HTTPError)
-          return logs.add({
-            status: "error",
-            description: error.message,
-            details: await error.response.text(),
-          });
-        console.error(error);
+          return logs.add(
+            await parseUnknownError({
+              err: error,
+              context: "While sending message to ChatNode",
+            }),
+          );
       }
     },
   },

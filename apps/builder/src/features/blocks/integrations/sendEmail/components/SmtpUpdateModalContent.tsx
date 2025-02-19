@@ -1,6 +1,6 @@
-import { useUser } from "@/features/account/hooks/useUser";
+import { useUser } from "@/features/user/hooks/useUser";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -10,7 +10,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from "@chakra-ui/react";
-import type { SmtpCredentials } from "@typebot.io/blocks-integrations/sendEmail/schema";
+import type { SmtpCredentials } from "@typebot.io/credentials/schemas";
 import { isNotDefined } from "@typebot.io/lib/utils";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -26,12 +26,12 @@ export const SmtpUpdateModalContent = ({ credentialsId, onUpdate }: Props) => {
   const { user } = useUser();
   const { workspace } = useWorkspace();
   const [isCreating, setIsCreating] = useState(false);
-  const { showToast } = useToast();
   const [smtpConfig, setSmtpConfig] = useState<SmtpCredentials["data"]>();
 
   const { data: existingCredentials } =
     trpc.credentials.getCredentials.useQuery(
       {
+        scope: "workspace",
         workspaceId: workspace!.id,
         credentialsId: credentialsId,
       },
@@ -48,9 +48,8 @@ export const SmtpUpdateModalContent = ({ credentialsId, onUpdate }: Props) => {
   const { mutate } = trpc.credentials.updateCredentials.useMutation({
     onSettled: () => setIsCreating(false),
     onError: (err) => {
-      showToast({
+      toast({
         description: err.message,
-        status: "error",
       });
     },
     onSuccess: () => {
@@ -68,8 +67,7 @@ export const SmtpUpdateModalContent = ({ credentialsId, onUpdate }: Props) => {
     );
     if (testSmtpError) {
       setIsCreating(false);
-      return showToast({
-        title: "Invalid configuration",
+      toast({
         description: "We couldn't send the test email with your configuration",
       });
     }
@@ -79,8 +77,9 @@ export const SmtpUpdateModalContent = ({ credentialsId, onUpdate }: Props) => {
         data: smtpConfig,
         name: smtpConfig.from.email as string,
         type: "smtp",
-        workspaceId: workspace.id,
       },
+      scope: "workspace",
+      workspaceId: workspace.id,
     });
   };
   return (
@@ -95,7 +94,7 @@ export const SmtpUpdateModalContent = ({ credentialsId, onUpdate }: Props) => {
         <ModalFooter>
           <Button
             type="submit"
-            colorScheme="blue"
+            colorScheme="orange"
             isDisabled={
               isNotDefined(smtpConfig?.from.email) ||
               isNotDefined(smtpConfig?.host) ||

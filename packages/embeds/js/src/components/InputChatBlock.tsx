@@ -10,6 +10,7 @@ import { MultiplePictureChoice } from "@/features/blocks/inputs/pictureChoice/Mu
 import { SinglePictureChoice } from "@/features/blocks/inputs/pictureChoice/SinglePictureChoice";
 import { RatingForm } from "@/features/blocks/inputs/rating/components/RatingForm";
 import { TextInput } from "@/features/blocks/inputs/textInput/components/TextInput";
+import { TimeForm } from "@/features/blocks/inputs/time/components/TimeForm";
 import { UrlInput } from "@/features/blocks/inputs/url/components/UrlInput";
 import type { BotContext, InputSubmitContent } from "@/types";
 import { formattedMessages } from "@/utils/formattedMessagesSignal";
@@ -27,26 +28,34 @@ import type { PhoneNumberInputBlock } from "@typebot.io/blocks-inputs/phone/sche
 import type { PictureChoiceBlock } from "@typebot.io/blocks-inputs/pictureChoice/schema";
 import type { RatingInputBlock } from "@typebot.io/blocks-inputs/rating/schema";
 import type { TextInputBlock } from "@typebot.io/blocks-inputs/text/schema";
+import type { TimeInputBlock } from "@typebot.io/blocks-inputs/time/schema";
 import type { UrlInputBlock } from "@typebot.io/blocks-inputs/url/schema";
 import type {
   ContinueChatResponse,
   RuntimeOptions,
 } from "@typebot.io/bot-engine/schemas/api";
-import { isNotDefined } from "@typebot.io/lib/utils";
-import { defaultGuestAvatarIsEnabled } from "@typebot.io/theme/constants";
+import { isDefined, isNotDefined } from "@typebot.io/lib/utils";
+import { defaultHostAvatarIsEnabled } from "@typebot.io/theme/constants";
 import type { Theme } from "@typebot.io/theme/schemas";
-import { Match, Show, Switch, createEffect, createSignal } from "solid-js";
+import {
+  Match,
+  Show,
+  Switch,
+  createEffect,
+  createSignal,
+  onMount,
+} from "solid-js";
 import { GuestBubble } from "./bubbles/GuestBubble";
 
 type Props = {
   ref: HTMLDivElement | undefined;
   block: NonNullable<ContinueChatResponse["input"]>;
-  hasHostAvatar: boolean;
-  guestAvatar?: NonNullable<Theme["chat"]>["guestAvatar"];
   chunkIndex: number;
   context: BotContext;
   isInputPrefillEnabled: boolean;
   hasError: boolean;
+  isOngoingLastChunk: boolean;
+  theme: Theme;
   onTransitionEnd: () => void;
   onSubmit: (content: InputSubmitContent) => void;
   onSkip: () => void;
@@ -56,6 +65,13 @@ export const InputChatBlock = (props: Props) => {
   const [answer, setAnswer] = persist(createSignal<InputSubmitContent>(), {
     key: `typebot-${props.context.typebot.id}-input-${props.chunkIndex}`,
     storage: props.context.storage,
+  });
+
+  onMount(() => {
+    // Re-submit last answer when recovered from storage to avoid being stuck
+    if (props.isOngoingLastChunk && isDefined(answer())) {
+      props.onSubmit(answer()!);
+    }
   });
 
   const handleSubmit = async (content: InputSubmitContent) => {
@@ -83,14 +99,7 @@ export const InputChatBlock = (props: Props) => {
   return (
     <Switch>
       <Match when={answer() && !props.hasError}>
-        <GuestBubble
-          answer={answer()}
-          showAvatar={
-            props.guestAvatar?.isEnabled ?? defaultGuestAvatarIsEnabled
-          }
-          avatarSrc={props.guestAvatar?.url && props.guestAvatar.url}
-          hasHostAvatar={props.hasHostAvatar}
-        />
+        <GuestBubble answer={answer()} theme={props.theme} />
       </Match>
       <Match when={isNotDefined(answer()) || props.hasError}>
         <div
@@ -98,7 +107,12 @@ export const InputChatBlock = (props: Props) => {
           data-blockid={props.block.id}
           ref={props.ref}
         >
-          <Show when={props.hasHostAvatar}>
+          <Show
+            when={
+              props.theme.chat?.hostAvatar?.isEnabled ??
+              defaultHostAvatarIsEnabled
+            }
+          >
             <div
               class={
                 "flex flex-shrink-0 items-center " +
@@ -197,6 +211,13 @@ const Input = (props: {
       <Match when={props.block.type === InputBlockType.DATE}>
         <DateForm
           options={props.block.options as DateInputBlock["options"]}
+          defaultValue={getPrefilledValue()}
+          onSubmit={onSubmit}
+        />
+      </Match>
+      <Match when={props.block.type === InputBlockType.TIME}>
+        <TimeForm
+          block={props.block as TimeInputBlock["options"]}
           defaultValue={getPrefilledValue()}
           onSubmit={onSubmit}
         />

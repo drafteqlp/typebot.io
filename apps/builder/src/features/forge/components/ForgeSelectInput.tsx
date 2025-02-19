@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MoreInfoTooltip } from "@/components/MoreInfoTooltip";
 import { Select } from "@/components/inputs/Select";
 import { VariablesButton } from "@/features/variables/components/VariablesButton";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   FormControl,
@@ -30,10 +29,12 @@ type Props = {
   isRequired?: boolean;
   width?: "full";
   withVariableButton?: boolean;
+  credentialsScope: "workspace" | "user";
   onChange: (value: string | undefined) => void;
 };
 export const ForgeSelectInput = ({
   defaultValue,
+  credentialsScope,
   fetcherId,
   options,
   blockDef,
@@ -48,7 +49,6 @@ export const ForgeSelectInput = ({
   onChange,
 }: Props) => {
   const { workspace } = useWorkspace();
-  const { showToast } = useToast();
 
   const fetcher = useMemo(
     () => findFetcher(blockDef, fetcherId),
@@ -56,24 +56,31 @@ export const ForgeSelectInput = ({
   );
 
   const { data } = trpc.forge.fetchSelectItems.useQuery(
-    {
-      integrationId: blockDef.id,
-      options: pick(
-        options,
-        (blockDef.auth ? ["credentialsId"] : []).concat(
-          fetcher?.dependencies ?? [],
-        ),
-      ),
-      workspaceId: workspace?.id as string,
-      fetcherId,
-    },
+    credentialsScope === "workspace"
+      ? {
+          scope: "workspace",
+          integrationId: blockDef.id,
+          options: pick(
+            options,
+            (blockDef.auth ? ["credentialsId"] : []).concat(
+              fetcher?.dependencies ?? [],
+            ),
+          ),
+          workspaceId: workspace?.id as string,
+          fetcherId,
+        }
+      : {
+          scope: "user",
+          integrationId: blockDef.id,
+          options: {
+            credentialsId: options.credentialsId,
+          },
+          fetcherId,
+        },
     {
       enabled: !!workspace?.id && !!fetcher,
       onError: (error) => {
-        showToast({
-          description: error.message,
-          status: "error",
-        });
+        if (error.data?.logError) toast(error.data.logError);
       },
     },
   );

@@ -1,5 +1,5 @@
 import { ChevronLeftIcon } from "@/components/icons";
-import { useUser } from "@/features/account/hooks/useUser";
+import { useUser } from "@/features/user/hooks/useUser";
 import {
   Button,
   Flex,
@@ -37,7 +37,7 @@ export const TypebotNotFoundPage = () => {
           <Button
             as={Link}
             href="/typebots"
-            colorScheme="blue"
+            colorScheme="orange"
             leftIcon={<ChevronLeftIcon />}
           >
             Dashboard

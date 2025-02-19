@@ -3,6 +3,7 @@ import type { BubbleProps } from "./features/bubble/components/Bubble";
 import type { PopupProps } from "./features/popup/components/Popup";
 
 export const defaultBotProps: BotProps = {
+  id: undefined,
   typebot: undefined,
   onNewInputBlock: undefined,
   onAnswer: undefined,
@@ -17,6 +18,7 @@ export const defaultBotProps: BotProps = {
   startFrom: undefined,
   prefilledVariables: undefined,
   apiHost: undefined,
+  wsHost: undefined,
   resultId: undefined,
   sessionId: undefined,
 };
@@ -38,5 +40,7 @@ export const defaultBubbleProps: BubbleProps = {
   theme: undefined,
   previewMessage: undefined,
   onPreviewMessageClick: undefined,
+  onPreviewMessageDismissed: undefined,
   autoShowDelay: undefined,
+  inlineStyle: undefined,
 };

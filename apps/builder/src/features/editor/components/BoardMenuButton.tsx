@@ -1,11 +1,12 @@
 import assert from "assert";
 import {
   BookIcon,
-  BracesIcon,
   DownloadIcon,
+  FileCurlyIcon,
   MoreVerticalIcon,
   SettingsIcon,
 } from "@/components/icons";
+import { ParentModalProvider } from "@/features/graph/providers/ParentModalProvider";
 import { parseDefaultPublicId } from "@/features/publish/helpers/parseDefaultPublicId";
 import {
   HStack,
@@ -54,10 +55,10 @@ export const BoardMenuButton = (props: StackProps) => {
   return (
     <HStack rounded="md" spacing="4" {...props}>
       <IconButton
-        icon={<BracesIcon />}
+        icon={<FileCurlyIcon />}
         aria-label="Open variables drawer"
         size="sm"
-        shadow="lg"
+        shadow="md"
         bgColor={useColorModeValue("white", undefined)}
         onClick={() => setRightPanel(RightPanel.VARIABLES)}
       />
@@ -67,7 +68,7 @@ export const BoardMenuButton = (props: StackProps) => {
           icon={<MoreVerticalIcon transform={"rotate(90deg)"} />}
           isLoading={isDownloading}
           size="sm"
-          shadow="lg"
+          shadow="md"
           bgColor={useColorModeValue("white", undefined)}
         />
         <MenuList>
@@ -83,7 +84,9 @@ export const BoardMenuButton = (props: StackProps) => {
             </MenuItem>
           ) : null}
         </MenuList>
-        <EditorSettingsModal isOpen={isOpen} onClose={onClose} />
+        <ParentModalProvider>
+          <EditorSettingsModal isOpen={isOpen} onClose={onClose} />
+        </ParentModalProvider>
       </Menu>
     </HStack>
   );

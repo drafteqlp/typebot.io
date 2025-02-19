@@ -13,10 +13,10 @@ type Props = {
   indices: BlockIndices;
 };
 export const ForgedBlockNodeContent = ({ block, indices }: Props) => {
-  const { blockDef, actionDef } = useForgedBlock(
-    block.type,
-    block.options?.action,
-  );
+  const { blockDef, actionDef } = useForgedBlock({
+    nodeType: block.type,
+    action: block.options?.action,
+  });
   const { typebot } = useTypebot();
 
   const isStreamingNextBlock = useMemo(() => {
@@ -52,7 +52,11 @@ export const ForgedBlockNodeContent = ({ block, indices }: Props) => {
   return (
     <Stack>
       <Text color={isConfigured ? "currentcolor" : "gray.500"} noOfLines={1}>
-        {isConfigured ? block.options.action : "Configure..."}
+        {isConfigured
+          ? actionDef?.parseBlockNodeLabel
+            ? actionDef.parseBlockNodeLabel(block.options)
+            : block.options.action
+          : "Configure..."}
       </Text>
       {typebot &&
         isConfigured &&

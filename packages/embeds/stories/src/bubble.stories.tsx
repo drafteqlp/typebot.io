@@ -3,6 +3,7 @@ import {
   close,
   hidePreviewMessage,
   open,
+  sendCommand,
   setInputValue,
   setPrefilledVariables,
   showPreviewMessage,
@@ -24,6 +25,7 @@ export const Default = () => {
         </button>
         <button onClick={() => setInputValue("YOOOO!")}>Set input value</button>
         <button onClick={hidePreviewMessage}>Close Preview Message</button>
+        <button onClick={() => sendCommand("wizz")}>Send command</button>
         <div>
           <p>Predefined name:</p>
           <input value={name} onChange={(e) => setName(e.target.value)} />
@@ -31,27 +33,27 @@ export const Default = () => {
             Set predefined name
           </button>
         </div>
+        <Bubble
+          typebot="my-typebot-hearhbv"
+          apiHost="http://localhost:3001"
+          wsHost="localhost:1999"
+          prefilledVariables={{
+            Name: ["John"],
+          }}
+          previewMessage={{
+            avatarUrl: "https://avatars.githubusercontent.com/u/16015833?v=4",
+            message: "Hello, I am a preview message",
+            autoShowDelay: 3000,
+          }}
+          theme={{
+            button: {
+              customIconSrc:
+                "https://avatars.githubusercontent.com/u/16015833?v=4",
+            },
+          }}
+          // isPreview
+        />
       </div>
-
-      <Bubble
-        typebot={"my-typebot-2b532x1"}
-        apiHost="http://localhost:3001"
-        prefilledVariables={{
-          Name: ["John"],
-        }}
-        previewMessage={{
-          avatarUrl: "https://avatars.githubusercontent.com/u/16015833?v=4",
-          message: "Hello, I am a preview message",
-          autoShowDelay: 3000,
-        }}
-        theme={{
-          button: {
-            backgroundColor: "#FF7537",
-            iconColor: "white",
-          },
-        }}
-        // isPreview
-      />
     </div>
   );
 };

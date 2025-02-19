@@ -1,5 +1,6 @@
 import { publicProcedure } from "@/helpers/server/trpc";
 import * as Sentry from "@sentry/nextjs";
+import { parseUnknownError } from "@typebot.io/lib/parseUnknownError";
 import { WhatsAppError } from "@typebot.io/whatsapp/WhatsAppError";
 import { resumeWhatsAppFlow } from "@typebot.io/whatsapp/resumeWhatsAppFlow";
 import {
@@ -30,9 +31,15 @@ export const receiveMessage = publicProcedure
     }),
   )
   .mutation(async ({ input: { entry, credentialsId, workspaceId } }) => {
-    const { receivedMessage, contactName, contactPhoneNumber, phoneNumberId } =
-      extractMessageDetails(entry);
-    if (!receivedMessage) return { message: "No message found" };
+    const {
+      receivedMessage,
+      contactName,
+      contactPhoneNumber,
+      phoneNumberId,
+      referral,
+    } = extractMessageDetails(entry);
+    if (!receivedMessage || receivedMessage.type === "reaction")
+      return { message: "No message content found" };
     if (!phoneNumberId) return { message: "No phone number found" };
 
     try {
@@ -46,18 +53,18 @@ export const receiveMessage = publicProcedure
           name: contactName,
           phoneNumber: contactPhoneNumber,
         },
+        referral,
       });
     } catch (err) {
       if (err instanceof WhatsAppError) {
-        console.log("Known WhatsApp error:", err.message, err.details);
         Sentry.captureMessage(err.message, err.details);
       } else {
-        console.error("Unknown WhatsApp error:", err);
-        Sentry.captureException(err);
+        console.error("sending unkown error to Sentry");
+        Sentry.captureException(err, {
+          data: await parseUnknownError({ err }),
+        });
       }
     }
-
-    await Sentry.flush();
 
     return {
       message: "Message received",
@@ -72,5 +79,12 @@ const extractMessageDetails = (entry: WhatsAppWebhookRequestBody["entry"]) => {
     entry.at(0)?.changes.at(0)?.value?.messages?.at(0)?.from ?? "";
   const phoneNumberId = entry.at(0)?.changes.at(0)?.value
     .metadata.phone_number_id;
-  return { receivedMessage, contactName, contactPhoneNumber, phoneNumberId };
+  const referral = entry.at(0)?.changes.at(0)?.value.messages?.at(0)?.referral;
+  return {
+    receivedMessage,
+    contactName,
+    contactPhoneNumber,
+    phoneNumberId,
+    referral,
+  };
 };

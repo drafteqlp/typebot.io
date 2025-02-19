@@ -34,6 +34,7 @@ import { isNotEmpty } from "@typebot.io/lib/utils";
 import type { Variable } from "@typebot.io/variables/schemas";
 import { useDrag } from "@use-gesture/react";
 import { type FormEvent, useState } from "react";
+import { toast } from "sonner";
 import { headerHeight } from "../../editor/constants";
 import { useTypebot } from "../../editor/providers/TypebotProvider";
 import { ResizeHandle } from "./ResizeHandle";
@@ -52,7 +53,6 @@ export const VariablesDrawer = ({ onClose }: Props) => {
       ? v.name.toLowerCase().includes(searchValue.toLowerCase())
       : true,
   );
-  const [isVariableCreated, setIsVariableCreated] = useState(false);
 
   const useResizeHandleDrag = useDrag(
     (state) => {
@@ -65,8 +65,7 @@ export const VariablesDrawer = ({ onClose }: Props) => {
 
   const handleCreateSubmit = (e: FormEvent) => {
     e.preventDefault();
-    setIsVariableCreated(true);
-    setTimeout(() => setIsVariableCreated(false), 500);
+    toast.success("Variable created");
     setSearchValue("");
     createVariable({
       id: createId(),
@@ -89,9 +88,9 @@ export const VariablesDrawer = ({ onClose }: Props) => {
       right="0"
       top={`0`}
       h={`100%`}
-      bgColor={useColorModeValue("white", "gray.900")}
+      bgColor={useColorModeValue("white", "gray.950")}
       borderLeftWidth={"1px"}
-      shadow="lg"
+      shadow="md"
       borderLeftRadius={"lg"}
       onMouseOver={() => setIsResizeHandleVisible(true)}
       onMouseLeave={() => setIsResizeHandleVisible(false)}
@@ -120,20 +119,19 @@ export const VariablesDrawer = ({ onClose }: Props) => {
           />
           <SlideFade
             in={
-              isVariableCreated ||
-              (filteredVariables &&
-                !filteredVariables.some((v) => v.name === searchValue))
+              filteredVariables &&
+              searchValue.length > 0 &&
+              !filteredVariables.some((v) => v.name === searchValue)
             }
             unmountOnExit
             offsetY={0}
             offsetX={10}
           >
             <IconButton
-              isDisabled={isVariableCreated}
-              icon={isVariableCreated ? <CheckIcon /> : <PlusIcon />}
+              icon={<PlusIcon />}
               aria-label="Create"
               type="submit"
-              colorScheme={isVariableCreated ? "green" : "blue"}
+              colorScheme="orange"
               flexShrink={0}
             />
           </SlideFade>
@@ -210,7 +208,7 @@ const VariableItem = ({
             <PopoverContent>
               <PopoverBody>
                 <SwitchWithLabel
-                  label="Save in results?"
+                  label="Save in results"
                   moreInfoContent="Check this option if you want to save the variable value in the typebot Results table."
                   initialValue={!variable.isSessionVariable}
                   onCheckChange={() =>

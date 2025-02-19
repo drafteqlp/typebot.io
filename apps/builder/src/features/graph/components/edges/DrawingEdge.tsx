@@ -1,16 +1,18 @@
 import assert from "assert";
 import { useTypebot } from "@/features/editor/providers/TypebotProvider";
-import { colors } from "@/lib/theme";
+import { useUser } from "@/features/user/hooks/useUser";
+import { trpcVanilla } from "@/lib/trpc";
 import { useEventListener } from "@chakra-ui/react";
 import type { Coordinates } from "@dnd-kit/utilities";
 import { omit } from "@typebot.io/lib/utils";
+import { colors } from "@typebot.io/ui/chakraTheme";
 import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { eventWidth, groupWidth } from "../../constants";
 import { computeConnectingEdgePath } from "../../helpers/computeConnectingEdgePath";
 import { computeEdgePathToMouse } from "../../helpers/computeEdgePathToMouth";
-import { useGroupsStore } from "../../hooks/useGroupsStore";
+import { useSelectionStore } from "../../hooks/useSelectionStore";
 import { useEndpoints } from "../../providers/EndpointsProvider";
-import { useEventsCoordinates } from "../../providers/EventsCoordinateProvider";
 import { useGraph } from "../../providers/GraphProvider";
 import type { ConnectingIds } from "../../types";
 
@@ -24,26 +26,24 @@ export const DrawingEdge = ({ connectingIds }: Props) => {
     sourceEndpointYOffsets: sourceEndpoints,
     targetEndpointYOffsets: targetEndpoints,
   } = useEndpoints();
-  const groupsCoordinates = useGroupsStore(
-    (state) => state.groupsCoordinates,
+  const elementsCoordinates = useSelectionStore(
+    (state) => state.elementsCoordinates,
     // Keep in cache because groups are not changing while drawing an edge
     () => true,
   );
-  const { eventsCoordinates } = useEventsCoordinates();
-  const { createEdge } = useTypebot();
+  const { user } = useUser();
+  const { createEdge, typebot, updateGroup } = useTypebot();
   const [mousePosition, setMousePosition] = useState<Coordinates | null>(null);
 
   const sourceElementCoordinates = connectingIds
     ? "eventId" in connectingIds.source
-      ? eventsCoordinates[connectingIds?.source.eventId]
-      : groupsCoordinates
-        ? groupsCoordinates[connectingIds?.source.groupId ?? ""]
-        : undefined
+      ? elementsCoordinates?.[connectingIds?.source.eventId]
+      : elementsCoordinates?.[connectingIds?.source.groupId ?? ""]
     : undefined;
 
   const targetGroupCoordinates =
-    groupsCoordinates &&
-    groupsCoordinates[connectingIds?.target?.groupId ?? ""];
+    elementsCoordinates &&
+    elementsCoordinates[connectingIds?.target?.groupId ?? ""];
 
   const sourceTop = useMemo(() => {
     if (!connectingIds) return 0;
@@ -113,7 +113,7 @@ export const DrawingEdge = ({ connectingIds }: Props) => {
     setConnectingIds(null);
   });
 
-  const createNewEdge = (connectingIds: ConnectingIds) => {
+  const createNewEdge = async (connectingIds: ConnectingIds) => {
     assert(connectingIds.target);
     createEdge({
       from:
@@ -122,6 +122,37 @@ export const DrawingEdge = ({ connectingIds }: Props) => {
           : connectingIds.source,
       to: connectingIds.target,
     });
+    const groupTitlesAutoGeneration = user?.groupTitlesAutoGeneration;
+    if (
+      typebot &&
+      groupTitlesAutoGeneration?.isEnabled &&
+      groupTitlesAutoGeneration.credentialsId &&
+      groupTitlesAutoGeneration.provider &&
+      groupTitlesAutoGeneration.model &&
+      "groupId" in connectingIds.source
+    ) {
+      const groupIndex = typebot?.groups.findIndex(
+        (g) => g.id === (connectingIds.source as { groupId: string }).groupId,
+      );
+      const group = typebot.groups[groupIndex];
+      if (!group || !group?.title.startsWith("Group #")) return;
+      try {
+        const result = await trpcVanilla.generateGroupTitle.mutate({
+          credentialsId: groupTitlesAutoGeneration.credentialsId,
+          typebotId: typebot.id,
+          groupContent: JSON.stringify({
+            blocks: group.blocks.map(({ id, outgoingEdgeId, ...rest }) => rest),
+          }),
+          model: groupTitlesAutoGeneration.model,
+          prompt: groupTitlesAutoGeneration.prompt,
+        });
+
+        updateGroup(groupIndex, { title: result.title });
+      } catch (error) {
+        toast.error("Failed to auto generate group title");
+        console.error("Failed to generate group title:", error);
+      }
+    }
   };
 
   if (mousePosition && mousePosition.x === 0 && mousePosition.y === 0)
@@ -129,9 +160,9 @@ export const DrawingEdge = ({ connectingIds }: Props) => {
   return (
     <path
       d={path}
-      stroke={colors.blue[400]}
+      stroke={colors.orange[400]}
       strokeWidth="2px"
-      markerEnd="url(#blue-arrow)"
+      markerEnd="url(#orange-arrow)"
       fill="none"
     />
   );

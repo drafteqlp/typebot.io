@@ -1,29 +1,37 @@
+import type { CommandData } from "@/features/commands/types";
 import { continueChatQuery } from "@/queries/continueChatQuery";
 import { saveClientLogsQuery } from "@/queries/saveClientLogsQuery";
 import type {
   BotContext,
   ChatChunk as ChatChunkType,
   InputSubmitContent,
-  OutgoingLog,
 } from "@/types";
+import { botContainer } from "@/utils/botContainerSignal";
 import { executeClientSideAction } from "@/utils/executeClientSideActions";
 import {
   formattedMessages,
   setFormattedMessages,
 } from "@/utils/formattedMessagesSignal";
 import { getAnswerContent } from "@/utils/getAnswerContent";
+import { hiddenInput, setHiddenInput } from "@/utils/hiddenInputSignal";
+import { mergeThemes } from "@/utils/mergeThemes";
 import { persist } from "@/utils/persist";
+import { setGeneralBackground } from "@/utils/setCssVariablesValue";
 import { setStreamingMessage } from "@/utils/streamingMessageSignal";
+import { toaster } from "@/utils/toaster";
 import type { InputBlock } from "@typebot.io/blocks-inputs/schema";
 import type {
-  ChatLog,
   ContinueChatResponse,
   Message,
   StartChatResponse,
 } from "@typebot.io/bot-engine/schemas/api";
+import type { ClientSideAction } from "@typebot.io/bot-engine/schemas/clientSideAction";
+import { parseUnknownClientError } from "@typebot.io/lib/parseUnknownClientError";
 import { isNotDefined } from "@typebot.io/lib/utils";
-import type { Theme } from "@typebot.io/theme/schemas";
-import { HTTPError } from "ky";
+import type { LogInSession } from "@typebot.io/logs/schemas";
+import { latestTypebotVersion } from "@typebot.io/schemas/versions";
+import { defaultSystemMessages } from "@typebot.io/settings/constants";
+import { BackgroundType } from "@typebot.io/theme/constants";
 import {
   For,
   Show,
@@ -34,34 +42,9 @@ import {
 } from "solid-js";
 import { ChatChunk } from "./ChatChunk";
 import { LoadingChunk } from "./LoadingChunk";
-import { PopupBlockedToast } from "./PopupBlockedToast";
 
-const autoScrollBottomToleranceScreenPercent = 0.6;
-const bottomSpacerHeight = 128;
-
-const parseDynamicTheme = (
-  initialTheme: Theme,
-  dynamicTheme: ContinueChatResponse["dynamicTheme"],
-): Theme => ({
-  ...initialTheme,
-  chat: {
-    ...initialTheme.chat,
-    hostAvatar:
-      initialTheme.chat?.hostAvatar && dynamicTheme?.hostAvatarUrl
-        ? {
-            ...initialTheme.chat.hostAvatar,
-            url: dynamicTheme.hostAvatarUrl,
-          }
-        : initialTheme.chat?.hostAvatar,
-    guestAvatar:
-      initialTheme.chat?.guestAvatar && dynamicTheme?.guestAvatarUrl
-        ? {
-            ...initialTheme.chat.guestAvatar,
-            url: dynamicTheme?.guestAvatarUrl,
-          }
-        : initialTheme.chat?.guestAvatar,
-  },
-});
+const AUTO_SCROLL_CLIENT_HEIGHT_PERCENT_TOLERANCE = 0.6;
+const AUTO_SCROLL_DELAY = 50;
 
 type Props = {
   initialChatReply: StartChatResponse;
@@ -69,19 +52,18 @@ type Props = {
   onNewInputBlock?: (inputBlock: InputBlock) => void;
   onAnswer?: (answer: { message: string; blockId: string }) => void;
   onEnd?: () => void;
-  onNewLogs?: (logs: OutgoingLog[]) => void;
+  onNewLogs?: (logs: LogInSession[]) => void;
   onProgressUpdate?: (progress: number) => void;
   onScriptExecutionSuccess?: (message: string) => void;
 };
 
 export const ConversationContainer = (props: Props) => {
   let chatContainer: HTMLDivElement | undefined;
-  const [chatChunks, setChatChunks, isRecovered, setIsRecovered] = persist(
+  const [chatChunks, setChatChunks] = persist(
     createSignal<ChatChunkType[]>([
       {
         input: props.initialChatReply.input,
         messages: props.initialChatReply.messages,
-        clientSideActions: props.initialChatReply.clientSideActions,
       },
     ]),
     {
@@ -94,24 +76,62 @@ export const ConversationContainer = (props: Props) => {
       },
     },
   );
+  const [clientSideActions, setClientSideActions] = persist(
+    createSignal<ClientSideAction[]>(
+      props.initialChatReply.clientSideActions ?? [],
+    ),
+    {
+      key: `typebot-${props.context.typebot.id}-clientSideActions`,
+      storage: props.context.storage,
+    },
+  );
+  const [isEnded, setIsEnded] = persist(createSignal(false), {
+    key: `typebot-${props.context.typebot.id}-isEnded`,
+    storage: props.context.storage,
+  });
+  const [totalChunksDisplayed, setTotalChunksDisplayed] = persist(
+    createSignal(0),
+    {
+      key: `typebot-${props.context.typebot.id}-totalChunksDisplayed`,
+      storage: props.context.storage,
+    },
+  );
   const [dynamicTheme, setDynamicTheme] = createSignal<
     ContinueChatResponse["dynamicTheme"]
   >(props.initialChatReply.dynamicTheme);
   const [theme, setTheme] = createSignal(props.initialChatReply.typebot.theme);
   const [isSending, setIsSending] = createSignal(false);
-  const [blockedPopupUrl, setBlockedPopupUrl] = createSignal<string>();
   const [hasError, setHasError] = createSignal(false);
+  const [inputAnswered, setInputAnswered] = createSignal<{
+    [key: string]: boolean;
+  }>({});
 
   onMount(() => {
+    window.addEventListener("message", processIncomingEvent);
     (async () => {
-      const initialChunk = chatChunks()[0]!;
-      if (!initialChunk.clientSideActions) return;
-      const actionsBeforeFirstBubble = initialChunk.clientSideActions.filter(
-        (action) => isNotDefined(action.lastBubbleBlockId),
-      );
-      await processClientSideActions(actionsBeforeFirstBubble);
+      const isRecoveredFromStorage = chatChunks().length > 1;
+      if (isRecoveredFromStorage) {
+        cleanupRecoveredChat();
+      } else {
+        const actionsBeforeFirstBubble = clientSideActions()?.filter((action) =>
+          isNotDefined(action.lastBubbleBlockId),
+        );
+        await processClientSideActions(actionsBeforeFirstBubble);
+      }
     })();
   });
+
+  const cleanupRecoveredChat = () => {
+    if ([...chatChunks()].pop()?.streamingMessageId)
+      setChatChunks((chunks) => chunks.slice(0, -1));
+    const actionsBeforeFirstBubble = getNextClientSideActionsBatch({
+      clientSideActions: clientSideActions(),
+      lastBubbleBlockId: undefined,
+    });
+    setClientSideActions((actions) =>
+      actions.slice(actionsBeforeFirstBubble.length),
+    );
+  };
 
   const streamMessage = ({ id, message }: { id: string; message: string }) => {
     setIsSending(false);
@@ -129,12 +149,19 @@ export const ConversationContainer = (props: Props) => {
   };
 
   createEffect(() => {
-    setTheme(
-      parseDynamicTheme(props.initialChatReply.typebot.theme, dynamicTheme()),
-    );
+    setTheme(mergeThemes(props.initialChatReply.typebot.theme, dynamicTheme()));
+    if (dynamicTheme()?.backgroundUrl)
+      setGeneralBackground({
+        background: {
+          type: BackgroundType.IMAGE,
+          content: dynamicTheme()?.backgroundUrl,
+        },
+        documentStyle: botContainer()?.style ?? document.documentElement.style,
+        typebotVersion: latestTypebotVersion,
+      });
   });
 
-  const saveLogs = async (clientLogs?: ChatLog[]) => {
+  const saveLogs = async (clientLogs?: LogInSession[]) => {
     if (!clientLogs) return;
     props.onNewLogs?.(clientLogs);
     if (props.context.isPreview) return;
@@ -146,14 +173,19 @@ export const ConversationContainer = (props: Props) => {
   };
 
   const sendMessage = async (answer?: InputSubmitContent) => {
-    setIsRecovered(false);
     setHasError(false);
     const currentInputBlock = [...chatChunks()].pop()?.input;
-    if (currentInputBlock?.id && props.onAnswer && answer)
-      props.onAnswer({
-        message: getAnswerContent(answer),
-        blockId: currentInputBlock.id,
-      });
+    if (currentInputBlock?.id && answer) {
+      if (props.onAnswer)
+        props.onAnswer({
+          message: getAnswerContent(answer),
+          blockId: currentInputBlock.id,
+        });
+      setInputAnswered((prev) => ({
+        ...prev,
+        [parseInputUniqueKey(currentInputBlock.id)]: true,
+      }));
+    }
     const longRequest = setTimeout(() => {
       setIsSending(true);
     }, 1000);
@@ -165,20 +197,20 @@ export const ConversationContainer = (props: Props) => {
     });
     clearTimeout(longRequest);
     setIsSending(false);
+    await processContinueChatResponse({ data, error });
+  };
+
+  const processContinueChatResponse = async ({
+    data,
+    error,
+  }: { data: ContinueChatResponse | undefined; error: unknown }) => {
     if (error) {
       setHasError(true);
       const errorLogs = [
-        {
-          description: "Failed to send the reply",
-          details:
-            error instanceof HTTPError
-              ? {
-                  status: error.response.status,
-                  body: await error.response.json(),
-                }
-              : error,
-          status: "error",
-        },
+        await parseUnknownClientError({
+          err: error,
+          context: "While sending message",
+        }),
       ];
       await saveClientLogsQuery({
         apiHost: props.context.apiHost,
@@ -205,9 +237,11 @@ export const ConversationContainer = (props: Props) => {
       props.onNewInputBlock(data.input);
     }
     if (data.clientSideActions) {
-      const actionsBeforeFirstBubble = data.clientSideActions.filter((action) =>
-        isNotDefined(action.lastBubbleBlockId),
-      );
+      setClientSideActions(data.clientSideActions);
+      const actionsBeforeFirstBubble = getNextClientSideActionsBatch({
+        clientSideActions: data.clientSideActions,
+        lastBubbleBlockId: undefined,
+      });
       await processClientSideActions(actionsBeforeFirstBubble);
       if (
         data.clientSideActions.length === 1 &&
@@ -221,8 +255,15 @@ export const ConversationContainer = (props: Props) => {
       ...displayedChunks,
       {
         input: data.input,
-        messages: data.messages,
-        clientSideActions: data.clientSideActions,
+        messages: data.messages.filter((message) => {
+          return (
+            message.type !== "text" ||
+            message.content.type !== "richText" ||
+            message.content.richText.length > 1 ||
+            message.content.richText[0].type !== "variable" ||
+            message.content.richText[0].children.length > 0
+          );
+        }),
       },
     ]);
   };
@@ -230,49 +271,43 @@ export const ConversationContainer = (props: Props) => {
   const autoScrollToBottom = (lastElement?: HTMLDivElement, offset = 0) => {
     if (!chatContainer) return;
 
-    const bottomTolerance =
-      chatContainer.clientHeight * autoScrollBottomToleranceScreenPercent -
-      bottomSpacerHeight;
+    const isBottomOfLastElementTooFarBelow =
+      chatContainer.scrollTop + chatContainer.clientHeight <
+      chatContainer.scrollHeight -
+        chatContainer.clientHeight *
+          AUTO_SCROLL_CLIENT_HEIGHT_PERCENT_TOLERANCE;
 
-    const isBottomOfLastElementInView =
-      chatContainer.scrollTop + chatContainer.clientHeight >=
-      chatContainer.scrollHeight - bottomTolerance;
+    if (isBottomOfLastElementTooFarBelow) return;
 
-    if (isBottomOfLastElementInView) {
-      setTimeout(() => {
-        chatContainer?.scrollTo(
-          0,
-          lastElement
-            ? lastElement.offsetTop - offset
-            : chatContainer.scrollHeight,
-        );
-      }, 50);
-    }
+    setTimeout(() => {
+      chatContainer?.scrollTo({
+        top: lastElement
+          ? lastElement.offsetTop - offset
+          : chatContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    }, AUTO_SCROLL_DELAY);
   };
 
   const handleAllBubblesDisplayed = async () => {
+    setTotalChunksDisplayed((prev) => prev + 1);
     const lastChunk = [...chatChunks()].pop();
     if (!lastChunk) return;
     if (isNotDefined(lastChunk.input)) {
+      setIsEnded(true);
       props.onEnd?.();
     }
   };
 
   const handleNewBubbleDisplayed = async (blockId: string) => {
-    const lastChunk = [...chatChunks()].pop();
-    if (!lastChunk) return;
-    if (lastChunk.clientSideActions) {
-      const actionsToExecute = lastChunk.clientSideActions.filter(
-        (action) => action.lastBubbleBlockId === blockId,
-      );
-      await processClientSideActions(actionsToExecute);
-    }
+    const actionsToExecute = getNextClientSideActionsBatch({
+      clientSideActions: clientSideActions(),
+      lastBubbleBlockId: blockId,
+    });
+    await processClientSideActions(actionsToExecute);
   };
 
-  const processClientSideActions = async (
-    actions: NonNullable<ContinueChatResponse["clientSideActions"]>,
-  ) => {
-    if (isRecovered()) return;
+  const processClientSideActions = async (actions: ClientSideAction[]) => {
     for (const action of actions) {
       if (
         "streamOpenAiChatCompletion" in action ||
@@ -284,11 +319,25 @@ export const ConversationContainer = (props: Props) => {
         clientSideAction: action,
         context: {
           apiHost: props.context.apiHost,
+          wsHost: props.context.wsHost,
           sessionId: props.initialChatReply.sessionId,
           resultId: props.initialChatReply.resultId,
         },
         onMessageStream: streamMessage,
+        onStreamError: (error) => {
+          setHasError(true);
+          props.onNewLogs?.([error]);
+        },
       });
+      if ("streamOpenAiChatCompletion" in action || "stream" in action) {
+        setTotalChunksDisplayed((prev) => prev + 1);
+        if (response && "replyToSend" in response && !response.replyToSend) {
+          setIsSending(false);
+          continue;
+        }
+      }
+
+      setClientSideActions((actions) => actions.slice(1));
       if (response && "logs" in response) saveLogs(response.logs);
       if (response && "replyToSend" in response) {
         setIsSending(false);
@@ -299,8 +348,17 @@ export const ConversationContainer = (props: Props) => {
         );
         return;
       }
-      if (response && "blockedPopupUrl" in response)
-        setBlockedPopupUrl(response.blockedPopupUrl);
+      if (response && "blockedPopupUrl" in response) {
+        toaster.create({
+          description:
+            props.context.typebot.settings.general?.systemMessages
+              ?.popupBlockedDescription ??
+            defaultSystemMessages.popupBlockedDescription,
+          meta: {
+            link: response.blockedPopupUrl,
+          },
+        });
+      }
       if (response && "scriptCallbackMessage" in response)
         props.onScriptExecutionSuccess?.(response.scriptCallbackMessage);
     }
@@ -309,16 +367,71 @@ export const ConversationContainer = (props: Props) => {
   onCleanup(() => {
     setStreamingMessage(undefined);
     setFormattedMessages([]);
+    window.removeEventListener("message", processIncomingEvent);
   });
+
+  const processIncomingEvent = async (event: MessageEvent<CommandData>) => {
+    const { data } = event;
+    if (
+      !data.isFromTypebot ||
+      (data.id && props.context.typebot.id !== data.id)
+    )
+      return;
+    if (data.command === "sendCommand" && !isEnded())
+      await sendCommandAndProcessResponse(data.text);
+  };
+
+  const sendCommandAndProcessResponse = async (
+    command: string,
+    retryCount = 0,
+    maxRetries = 5,
+  ) => {
+    if (isSending()) {
+      if (retryCount >= maxRetries) {
+        throw new Error("Max retry attempts for command reached");
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      return sendCommandAndProcessResponse(command, retryCount + 1, maxRetries);
+    }
+
+    const currentInputBlock = [...chatChunks()].pop()?.input;
+    if (
+      currentInputBlock?.id &&
+      !inputAnswered()[parseInputUniqueKey(currentInputBlock.id)]
+    )
+      setHiddenInput((prev) => ({
+        ...prev,
+        [parseInputUniqueKey(currentInputBlock.id)]: true,
+      }));
+    const longRequest = setTimeout(() => {
+      setIsSending(true);
+    }, 1000);
+    autoScrollToBottom();
+    const { data, error } = await continueChatQuery({
+      apiHost: props.context.apiHost,
+      sessionId: props.initialChatReply.sessionId,
+      message: {
+        type: "command",
+        command,
+      },
+    });
+    clearTimeout(longRequest);
+    setIsSending(false);
+    return processContinueChatResponse({ data, error });
+  };
+
+  const parseInputUniqueKey = (id: string) =>
+    `${id}-${chatChunks().length - 1}`;
 
   const handleSkip = () => sendMessage(undefined);
 
   return (
     <div
       ref={chatContainer}
-      class="flex flex-col overflow-y-auto w-full px-3 pt-10 relative scrollable-container typebot-chat-view scroll-smooth gap-2"
+      class="flex flex-col overflow-y-auto w-full relative scrollable-container typebot-chat-view scroll-smooth gap-2"
     >
-      <For each={chatChunks()}>
+      <For each={chatChunks().slice(0, totalChunksDisplayed() + 1)}>
         {(chatChunk, index) => (
           <ChatChunk
             index={index()}
@@ -329,13 +442,30 @@ export const ConversationContainer = (props: Props) => {
             streamingMessageId={chatChunk.streamingMessageId}
             context={props.context}
             hideAvatar={
-              !chatChunk.input &&
-              ((chatChunks()[index() + 1]?.messages ?? []).length > 0 ||
-                chatChunks()[index() + 1]?.streamingMessageId !== undefined ||
+              (!chatChunk.input ||
+                hiddenInput()[`${chatChunk.input.id}-${index()}`]) &&
+              ((
+                chatChunks().slice(0, totalChunksDisplayed() + 1)[index() + 1]
+                  ?.messages ?? []
+              ).length > 0 ||
+                chatChunks().slice(0, totalChunksDisplayed() + 1)[index() + 1]
+                  ?.streamingMessageId !== undefined ||
                 (chatChunk.messages.length > 0 && isSending()))
             }
-            hasError={hasError() && index() === chatChunks().length - 1}
-            isTransitionDisabled={index() !== chatChunks().length - 1}
+            hasError={
+              hasError() &&
+              index() ===
+                chatChunks().slice(0, totalChunksDisplayed() + 1).length - 1
+            }
+            isTransitionDisabled={
+              index() !==
+              chatChunks().slice(0, totalChunksDisplayed() + 1).length - 1
+            }
+            isOngoingLastChunk={
+              !isEnded() &&
+              index() ===
+                chatChunks().slice(0, totalChunksDisplayed() + 1).length - 1
+            }
             onNewBubbleDisplayed={handleNewBubbleDisplayed}
             onAllBubblesDisplayed={handleAllBubblesDisplayed}
             onSubmit={sendMessage}
@@ -347,26 +477,14 @@ export const ConversationContainer = (props: Props) => {
       <Show when={isSending()}>
         <LoadingChunk theme={theme()} />
       </Show>
-      <Show when={blockedPopupUrl()} keyed>
-        {(blockedPopupUrl) => (
-          <div class="flex justify-end">
-            <PopupBlockedToast
-              url={blockedPopupUrl}
-              onLinkClick={() => setBlockedPopupUrl(undefined)}
-            />
-          </div>
-        )}
-      </Show>
       <BottomSpacer />
     </div>
   );
 };
 
+// Needed because we need to simulate a bottom padding relative to the chat view height
 const BottomSpacer = () => (
-  <div
-    class="w-full flex-shrink-0 typebot-bottom-spacer"
-    style={{ height: bottomSpacerHeight + "px" }}
-  />
+  <div class="w-full flex-shrink-0 typebot-bottom-spacer h-[20%]" />
 );
 
 const convertSubmitContentToMessage = (
@@ -380,4 +498,22 @@ const convertSubmitContentToMessage = (
       attachedFileUrls: answer.attachments?.map((attachment) => attachment.url),
     };
   if (answer.type === "recording") return { type: "audio", url: answer.url };
+};
+
+const getNextClientSideActionsBatch = ({
+  clientSideActions,
+  lastBubbleBlockId,
+}: {
+  clientSideActions: ClientSideAction[];
+  lastBubbleBlockId: string | undefined;
+}) => {
+  const actionsBatch: ClientSideAction[] = [];
+  let currentLastBubbleBlockId = lastBubbleBlockId;
+  for (const action of clientSideActions) {
+    if (currentLastBubbleBlockId !== action.lastBubbleBlockId) break;
+    currentLastBubbleBlockId = action.lastBubbleBlockId;
+    if (lastBubbleBlockId === action.lastBubbleBlockId)
+      actionsBatch.push(action);
+  }
+  return actionsBatch;
 };

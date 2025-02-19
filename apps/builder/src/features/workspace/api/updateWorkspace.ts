@@ -31,10 +31,13 @@ export const updateWorkspace = authenticatedProcedure
       workspace: workspaceSchema.pick({ name: true, icon: true }),
     }),
   )
-  .mutation(async ({ input: { workspaceId, ...updates }, ctx: { user } }) => {
+  .mutation(async ({ input: { workspaceId, icon, name }, ctx: { user } }) => {
     await prisma.workspace.updateMany({
       where: { members: { some: { userId: user.id } }, id: workspaceId },
-      data: updates,
+      data: {
+        name,
+        icon,
+      },
     });
 
     const workspace = await prisma.workspace.findFirst({

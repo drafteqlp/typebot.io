@@ -13,10 +13,8 @@ import {
 import { useState } from "react";
 import packageJson from "../../../../../../../../../../packages/embeds/js/package.json";
 import { PopupSettings } from "../../../settings/PopupSettings";
-import { parseApiHostValue } from "../../../snippetParsers";
 import { parseInitPopupCode } from "../../../snippetParsers/popup";
-
-const typebotCloudLibraryVersion = "0.2";
+import { typebotCloudLibraryVersion } from "./constants";
 
 type Props = {
   publicId: string;
@@ -30,7 +28,7 @@ export const WordpressPopupInstructions = ({
 
   const initCode = parseInitPopupCode({
     typebot: publicId,
-    apiHost: parseApiHostValue(customDomain),
+    customDomain,
     autoShowDelay,
   });
 

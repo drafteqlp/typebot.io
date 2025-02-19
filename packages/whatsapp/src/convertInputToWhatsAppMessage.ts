@@ -7,11 +7,14 @@ import type { ContinueChatResponse } from "@typebot.io/bot-engine/schemas/api";
 import { env } from "@typebot.io/env";
 import { isDefined, isEmpty } from "@typebot.io/lib/utils";
 import { convertRichTextToMarkdown } from "@typebot.io/rich-text/convertRichTextToMarkdown";
+import { defaultSystemMessages } from "@typebot.io/settings/constants";
+import type { SystemMessages } from "@typebot.io/settings/schemas";
 import type { WhatsAppSendingMessage } from "./schemas";
 
 export const convertInputToWhatsAppMessages = (
   input: NonNullable<ContinueChatResponse["input"]>,
   lastMessage: ContinueChatResponse["messages"][number] | undefined,
+  systemMessages?: Pick<SystemMessages, "whatsAppPictureChoiceSelectLabel">,
 ): WhatsAppSendingMessage[] => {
   const lastMessageText =
     lastMessage?.type === BubbleBlockType.TEXT &&
@@ -22,6 +25,7 @@ export const convertInputToWhatsAppMessages = (
       : undefined;
   switch (input.type) {
     case InputBlockType.DATE:
+    case InputBlockType.TIME:
     case InputBlockType.EMAIL:
     case InputBlockType.FILE:
     case InputBlockType.NUMBER:
@@ -85,7 +89,9 @@ export const convertInputToWhatsAppMessages = (
                   type: "reply",
                   reply: {
                     id: item.id,
-                    title: "Select",
+                    title:
+                      systemMessages?.whatsAppPictureChoiceSelectLabel ??
+                      defaultSystemMessages.whatsAppPictureChoiceSelectLabel,
                   },
                 },
               ],

@@ -1,5 +1,4 @@
 import { Seo } from "@/components/Seo";
-import { useUser } from "@/features/account/hooks/useUser";
 import {
   PreCheckoutModal,
   type PreCheckoutModalProps,
@@ -7,11 +6,12 @@ import {
 import { TypebotDndProvider } from "@/features/folders/TypebotDndProvider";
 import { FolderContent } from "@/features/folders/components/FolderContent";
 import { ParentModalProvider } from "@/features/graph/providers/ParentModalProvider";
+import { useUser } from "@/features/user/hooks/useUser";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
-import { Spinner, Stack, Text, VStack } from "@chakra-ui/react";
+import { Button, Spinner, Stack, Text, VStack } from "@chakra-ui/react";
 import { useTranslate } from "@tolgee/react";
-import { guessIfUserIsEuropean } from "@typebot.io/billing/helpers/guessIfUserIsEuropean";
 import type { Plan } from "@typebot.io/prisma/enum";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -51,7 +51,6 @@ export const DashboardPage = () => {
       setPreCheckoutPlan({
         plan: subscribePlan as "PRO" | "STARTER",
         workspaceId: workspace.id,
-        currency: guessIfUserIsEuropean() ? "eur" : "usd",
       });
     }
   }, [createCustomCheckoutSession, router.query, user, workspace]);

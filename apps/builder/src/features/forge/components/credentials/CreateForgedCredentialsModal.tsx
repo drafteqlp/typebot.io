@@ -1,6 +1,6 @@
 import { TextInput } from "@/components/inputs/TextInput";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -15,15 +15,14 @@ import {
 } from "@chakra-ui/react";
 import type { Credentials } from "@typebot.io/credentials/schemas";
 import type { ForgedBlockDefinition } from "@typebot.io/forge-repository/definitions";
-import type React from "react";
 import { useState } from "react";
 import { ZodObjectLayout } from "../zodLayouts/ZodObjectLayout";
 
 type Props = {
   blockDef: ForgedBlockDefinition;
   isOpen: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultData?: any;
+  scope: "workspace" | "user";
   onClose: () => void;
   onNewCredentials: (id: string) => void;
 };
@@ -32,6 +31,7 @@ export const CreateForgedCredentialsModal = ({
   blockDef,
   isOpen,
   defaultData,
+  scope,
   onClose,
   onNewCredentials,
 }: Props) => {
@@ -42,6 +42,7 @@ export const CreateForgedCredentialsModal = ({
       <CreateForgedCredentialsModalContent
         defaultData={defaultData}
         blockDef={blockDef}
+        scope={scope}
         onNewCredentials={(id) => {
           onClose();
           onNewCredentials(id);
@@ -54,9 +55,9 @@ export const CreateForgedCredentialsModal = ({
 export const CreateForgedCredentialsModalContent = ({
   blockDef,
   onNewCredentials,
-}: Pick<Props, "blockDef" | "onNewCredentials" | "defaultData">) => {
+  scope,
+}: Pick<Props, "blockDef" | "onNewCredentials" | "defaultData" | "scope">) => {
   const { workspace } = useWorkspace();
-  const { showToast } = useToast();
   const [name, setName] = useState("");
   const [data, setData] = useState({});
 
@@ -72,9 +73,8 @@ export const CreateForgedCredentialsModalContent = ({
     onMutate: () => setIsCreating(true),
     onSettled: () => setIsCreating(false),
     onError: (err) => {
-      showToast({
+      toast({
         description: err.message,
-        status: "error",
       });
     },
     onSuccess: (data) => {
@@ -86,14 +86,26 @@ export const CreateForgedCredentialsModalContent = ({
   const createOpenAICredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!workspace || !blockDef.auth) return;
-    mutate({
-      credentials: {
-        type: blockDef.id,
-        workspaceId: workspace.id,
-        name,
-        data,
-      } as Credentials,
-    });
+    mutate(
+      scope === "workspace"
+        ? {
+            credentials: {
+              type: blockDef.id,
+              name: name ?? "My account",
+              data,
+            } as Credentials,
+            scope: "workspace",
+            workspaceId: workspace.id,
+          }
+        : {
+            credentials: {
+              type: blockDef.id,
+              name: name ?? "My account",
+              data,
+            } as Credentials,
+            scope: "user",
+          },
+    );
   };
 
   if (!blockDef.auth) return null;
@@ -104,8 +116,8 @@ export const CreateForgedCredentialsModalContent = ({
       <form onSubmit={createOpenAICredentials}>
         <ModalBody as={Stack} spacing="6">
           <TextInput
-            isRequired
-            label="Name"
+            label="Label"
+            moreInfoTooltip={`Choose a name to identify this ${blockDef.auth.name}`}
             onChange={setName}
             placeholder="My account"
             withVariableButton={false}
@@ -123,7 +135,7 @@ export const CreateForgedCredentialsModalContent = ({
             type="submit"
             isLoading={isCreating}
             isDisabled={Object.keys(data).length === 0}
-            colorScheme="blue"
+            colorScheme="orange"
           >
             Create
           </Button>

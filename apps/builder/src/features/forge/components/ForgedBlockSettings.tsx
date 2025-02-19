@@ -14,10 +14,10 @@ type Props = {
 };
 export const ForgedBlockSettings = ({ block, onOptionsChange }: Props) => {
   const [keySuffix, setKeySuffix] = useState<number>(0);
-  const { blockDef, blockSchema, actionDef } = useForgedBlock(
-    block.type,
-    block.options?.action,
-  );
+  const { blockDef, blockSchema, actionDef } = useForgedBlock({
+    nodeType: block.type,
+    action: block.options?.action,
+  });
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const updateCredentialsId = (credentialsId?: string) => {
@@ -27,7 +27,6 @@ export const ForgedBlockSettings = ({ block, onOptionsChange }: Props) => {
     });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const resetOptionsAction = (updates: any) => {
     if (!actionDef) return;
     const actionOptionsKeys = Object.keys(actionDef.options?.shape ?? []);
@@ -48,7 +47,6 @@ export const ForgedBlockSettings = ({ block, onOptionsChange }: Props) => {
     setKeySuffix((prev) => prev + 1);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateOptions = (updates: any) => {
     const isChangingAction =
       actionDef && updates?.action && updates.action !== block.options.action;
@@ -65,12 +63,14 @@ export const ForgedBlockSettings = ({ block, onOptionsChange }: Props) => {
       {blockDef.auth && (
         <>
           <CreateForgedCredentialsModal
+            scope="workspace"
             blockDef={blockDef}
             isOpen={isOpen}
             onClose={onClose}
             onNewCredentials={updateCredentialsId}
           />
           <ForgedCredentialsDropdown
+            scope="workspace"
             key={block.options?.credentialsId ?? "none"}
             blockDef={blockDef}
             currentCredentialsId={block.options?.credentialsId}

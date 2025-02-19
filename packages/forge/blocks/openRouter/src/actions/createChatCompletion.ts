@@ -1,9 +1,11 @@
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { getChatCompletionSetVarIds } from "@typebot.io/ai/getChatCompletionSetVarIds";
+import { getChatCompletionStreamVarId } from "@typebot.io/ai/getChatCompletionStreamVarId";
+import { parseChatCompletionOptions } from "@typebot.io/ai/parseChatCompletionOptions";
+import { runChatCompletion } from "@typebot.io/ai/runChatCompletion";
+import { runChatCompletionStream } from "@typebot.io/ai/runChatCompletionStream";
 import { createAction } from "@typebot.io/forge";
-import { getChatCompletionSetVarIds } from "@typebot.io/openai-block/shared/getChatCompletionSetVarIds";
-import { getChatCompletionStreamVarId } from "@typebot.io/openai-block/shared/getChatCompletionStreamVarId";
-import { parseChatCompletionOptions } from "@typebot.io/openai-block/shared/parseChatCompletionOptions";
-import { runOpenAIChatCompletion } from "@typebot.io/openai-block/shared/runOpenAIChatCompletion";
-import { runOpenAIChatCompletionStream } from "@typebot.io/openai-block/shared/runOpenAIChatCompletionStream";
+import { parseUnknownError } from "@typebot.io/lib/parseUnknownError";
 import ky from "ky";
 import { auth } from "../auth";
 import { defaultOpenRouterOptions } from "../constants";
@@ -28,17 +30,11 @@ export const createChatCompletion = createAction({
       transform: (options) => ({
         ...options,
         action: "Create Chat Message",
-        responseMapping: options.responseMapping?.map((res: any) =>
-          res.item === "Message content"
-            ? { ...res, item: "Message Content" }
-            : res,
-        ),
       }),
     },
   ],
   options: parseChatCompletionOptions({
     modelFetchId: "fetchModels",
-    defaultTemperature: defaultOpenRouterOptions.temperature,
   }),
   getSetVariableIds: getChatCompletionSetVarIds,
   fetchers: [
@@ -46,32 +42,84 @@ export const createChatCompletion = createAction({
       id: "fetchModels",
       dependencies: [],
       fetch: async () => {
-        const response = await ky
-          .get(defaultOpenRouterOptions.baseUrl + "/models")
-          .json<ModelsResponse>();
+        try {
+          const response = await ky
+            .get(defaultOpenRouterOptions.baseUrl + "/models")
+            .json<ModelsResponse>();
 
-        return response.data.map((model) => ({
-          value: model.id,
-          label: model.name,
-        }));
+          return {
+            data: response.data.map((model) => ({
+              value: model.id,
+              label: model.name,
+            })),
+          };
+        } catch (err) {
+          return {
+            error: await parseUnknownError({ err, context: "Fetching models" }),
+          };
+        }
       },
     },
   ],
   run: {
-    server: (params) =>
-      runOpenAIChatCompletion({
-        ...params,
-        config: { baseUrl: defaultOpenRouterOptions.baseUrl },
-      }),
+    server: ({ credentials: { apiKey }, options, variables, logs }) => {
+      if (!apiKey) return logs.add("No API key provided");
+      const modelName = options.model?.trim();
+      if (!modelName) return logs.add("No model provided");
+      if (!options.messages) return logs.add("No messages provided");
+
+      return runChatCompletion({
+        model: createOpenRouter({
+          apiKey,
+        }).chat(modelName),
+        variables,
+        messages: options.messages,
+        tools: options.tools,
+        isVisionEnabled: false,
+        temperature: options.temperature
+          ? Number(options.temperature)
+          : undefined,
+        responseMapping: options.responseMapping,
+        logs,
+      });
+    },
     stream: {
       getStreamVariableId: getChatCompletionStreamVarId,
-      run: async (params) =>
-        runOpenAIChatCompletionStream({
-          ...params,
-          config: {
-            baseUrl: defaultOpenRouterOptions.baseUrl,
-          },
-        }),
+      run: async ({ credentials: { apiKey }, options, variables }) => {
+        if (!apiKey)
+          return {
+            error: {
+              description: "No API key provided",
+            },
+          };
+        const modelName = options.model?.trim();
+        if (!modelName)
+          return {
+            error: {
+              description: "No model provided",
+            },
+          };
+        if (!options.messages)
+          return {
+            error: {
+              description: "No messages provided",
+            },
+          };
+
+        return runChatCompletionStream({
+          model: createOpenRouter({
+            apiKey,
+          }).chat(modelName),
+          variables,
+          messages: options.messages,
+          tools: options.tools,
+          isVisionEnabled: false,
+          temperature: options.temperature
+            ? Number(options.temperature)
+            : undefined,
+          responseMapping: options.responseMapping,
+        });
+      },
     },
   },
 });

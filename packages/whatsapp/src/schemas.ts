@@ -1,4 +1,3 @@
-import { credentialsBaseSchema } from "@typebot.io/blocks-base/schemas";
 import { ComparisonOperators } from "@typebot.io/conditions/constants";
 import { z } from "@typebot.io/zod";
 
@@ -80,75 +79,94 @@ const sendingMessageSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+const incomingMessageReferral = z.object({
+  ctwa_clid: z.string().optional(),
+  source_id: z.string().optional(),
+});
+export type WhatsAppMessageReferral = z.infer<typeof incomingMessageReferral>;
+
+const sharedIncomingMessageFieldsSchema = z.object({
+  from: z.string(),
+  timestamp: z.string(),
+  referral: incomingMessageReferral.optional(),
+});
+
+const incomingButtonReplySchema = z.object({
+  type: z.literal("button_reply"),
+  button_reply: z.object({
+    id: z.string(),
+    title: z.string(),
+  }),
+});
+
+const incomingListReplySchema = z.object({
+  type: z.literal("list_reply"),
+  list_reply: z.object({
+    id: z.string(),
+    title: z.string(),
+  }),
+});
+
+const incomingInteractiveReplySchema = z.discriminatedUnion("type", [
+  incomingButtonReplySchema,
+  incomingListReplySchema,
+]);
+
 export const incomingMessageSchema = z.discriminatedUnion("type", [
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("text"),
     text: z.object({
       body: z.string(),
     }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("button"),
     button: z.object({
       text: z.string(),
       payload: z.string(),
     }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("interactive"),
-    interactive: z.object({
-      button_reply: z.object({
-        id: z.string(),
-        title: z.string(),
-      }),
-    }),
-    timestamp: z.string(),
+    interactive: incomingInteractiveReplySchema,
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("image"),
     image: z.object({ id: z.string(), caption: z.string().optional() }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("video"),
     video: z.object({ id: z.string(), caption: z.string().optional() }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("audio"),
     audio: z.object({ id: z.string() }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("document"),
     document: z.object({ id: z.string(), caption: z.string().optional() }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("location"),
     location: z.object({
       latitude: z.number(),
       longitude: z.number(),
     }),
-    timestamp: z.string(),
   }),
-  z.object({
-    from: z.string(),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("webhook"),
     webhook: z.object({
-      data: z.string(),
+      data: z.string().optional(),
     }),
-    timestamp: z.string(),
+  }),
+  sharedIncomingMessageFieldsSchema.extend({
+    type: z.literal("reaction"),
+    reaction: z.object({
+      emoji: z.string().optional(),
+    }),
+  }),
+  sharedIncomingMessageFieldsSchema.extend({
+    type: z.literal("unsupported"),
   }),
 ]);
 
@@ -194,16 +212,6 @@ export type WhatsAppWebhookRequestBody = z.infer<
   typeof whatsAppWebhookRequestBodySchema
 >;
 
-export const whatsAppCredentialsSchema = z
-  .object({
-    type: z.literal("whatsApp"),
-    data: z.object({
-      systemUserAccessToken: z.string(),
-      phoneNumberId: z.string(),
-    }),
-  })
-  .merge(credentialsBaseSchema);
-
 const whatsAppComparisonSchema = z.object({
   id: z.string(),
   comparisonOperator: z.nativeEnum(ComparisonOperators).optional(),
@@ -213,4 +221,3 @@ export type WhatsAppComparison = z.infer<typeof whatsAppComparisonSchema>;
 
 export type WhatsAppIncomingMessage = z.infer<typeof incomingMessageSchema>;
 export type WhatsAppSendingMessage = z.infer<typeof sendingMessageSchema>;
-export type WhatsAppCredentials = z.infer<typeof whatsAppCredentialsSchema>;

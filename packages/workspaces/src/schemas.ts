@@ -25,6 +25,21 @@ export const workspaceInvitationSchema = z.object({
   Omit<Prisma.WorkspaceInvitation, "workspaceId" | "userId" | "id">
 >;
 
+export const groupTitlesAutoGenerationSchema = z.object({
+  isEnabled: z.boolean().optional(),
+  provider: z.string().optional(),
+  credentialsId: z.string().optional(),
+  model: z.string().optional(),
+  prompt: z.string().optional(),
+});
+export type GroupTitlesAutoGeneration = z.infer<
+  typeof groupTitlesAutoGenerationSchema
+>;
+
+const workspaceSettingsSchema = z.object({
+  groupTitlesAutoGeneration: groupTitlesAutoGenerationSchema.optional(),
+});
+
 export const workspaceSchema = z.object({
   id: z.string(),
   createdAt: z.date(),
@@ -39,6 +54,7 @@ export const workspaceSchema = z.object({
   chatsLimitSecondEmailSentAt: z.date().nullable(),
   storageLimitFirstEmailSentAt: z.date().nullable(),
   storageLimitSecondEmailSentAt: z.date().nullable(),
+  settings: workspaceSettingsSchema.nullable(),
   customChatsLimit: z.number().nullable(),
   customStorageLimit: z.number().nullable(),
   customSeatsLimit: z.number().nullable(),
@@ -46,6 +62,7 @@ export const workspaceSchema = z.object({
   isSuspended: z.boolean(),
   isPastDue: z.boolean(),
   isVerified: z.boolean().nullable(),
+  chatsHardLimit: z.number().nullable(),
 }) satisfies z.ZodType<Prisma.Workspace>;
 
 export type Workspace = z.infer<typeof workspaceSchema>;

@@ -15,7 +15,12 @@ type Props = {
 
 export const MultipleChoicesForm = (props: Props) => {
   let inputRef: HTMLInputElement | undefined;
-  const [filteredItems, setFilteredItems] = createSignal(props.defaultItems);
+  const [filteredItems, setFilteredItems] = createSignal(
+    props.options?.isSearchable &&
+      !props.options?.areInitialSearchButtonsVisible
+      ? []
+      : props.defaultItems,
+  );
   const [selectedItemIds, setSelectedItemIds] = createSignal<string[]>([]);
 
   onMount(() => {
@@ -50,15 +55,27 @@ export const MultipleChoicesForm = (props: Props) => {
     });
 
   const filterItems = (inputValue: string) => {
+    if (inputValue === "" || inputValue.trim().length === 0) {
+      setFilteredItems(
+        !props.options?.areInitialSearchButtonsVisible
+          ? []
+          : props.defaultItems,
+      );
+      return;
+    }
+
     setFilteredItems(
       props.defaultItems.filter((item) =>
-        item.content?.toLowerCase().includes((inputValue ?? "").toLowerCase()),
+        item.content?.toLowerCase().includes(inputValue.toLowerCase()),
       ),
     );
   };
 
   return (
-    <form class="flex flex-col items-end gap-2 w-full" onSubmit={handleSubmit}>
+    <form
+      class="flex flex-col items-end gap-2 w-full typebot-buttons-input"
+      onSubmit={handleSubmit}
+    >
       <Show when={props.options?.isSearchable}>
         <div class="flex items-end typebot-input w-full">
           <SearchInput
@@ -68,17 +85,24 @@ export const MultipleChoicesForm = (props: Props) => {
               props.options?.searchInputPlaceholder ??
               defaultChoiceInputOptions.searchInputPlaceholder
             }
-            onClear={() => setFilteredItems(props.defaultItems)}
+            onClear={() =>
+              setFilteredItems(
+                !props.options?.areInitialSearchButtonsVisible
+                  ? []
+                  : props.defaultItems,
+              )
+            }
           />
         </div>
       </Show>
       <div
         class={
-          "flex flex-wrap justify-end gap-2" +
+          "flex justify-end gap-2" +
           (props.options?.isSearchable
             ? " overflow-y-scroll max-h-80 rounded-md"
             : "")
         }
+        data-slot="list"
       >
         <For each={filteredItems()}>
           {(item) => (

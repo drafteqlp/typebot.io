@@ -8,7 +8,7 @@
     "db:setCustomPlan": "tsx src/setCustomPlan.ts",
     "db:bulkUpdate": "tsx src/bulkUpdate.ts",
     "db:fixTypebots": "tsx src/fixTypebots.ts",
-    "checkAndReportChatsUsage": "tsx src/checkAndReportChatsUsage.ts",
+    "checkAndReportChatsUsage": "SKIP_ENV_CHECK=true tsx src/checkAndReportChatsUsage.ts",
     "inspectUser": "tsx src/inspectUser.ts",
     "checkSubscriptionsStatus": "tsx src/checkSubscriptionsStatus.ts",
     "createChatsPrices": "tsx src/createChatsPrices.ts",
@@ -25,8 +25,9 @@
     "getCoupon": "tsx src/getCoupon.ts",
     "redeemCoupon": "tsx src/redeemCoupon.ts",
     "exportResults": "tsx src/exportResults.ts",
-    "updateUserEmail": "tsx src/updateUserEmail.ts",
+    "updateUserEmail": "SKIP_ENV_CHECK=true dotenv -e ./.env.production -- tsx src/updateUserEmail.ts",
     "inspectChatSession": "tsx src/inspectChatSession.ts",
+    "inspectCredentials": "tsx src/inspectCredentials.ts",
     "deleteChatSession": "tsx src/deleteChatSession.ts",
     "checkDependencies": "tsx src/checkDependencies.ts",
     "readCsvAndDoSomething": "SKIP_ENV_CHECK=true dotenv -e ./.env.production -- tsx src/readCsvAndDoSomething.ts"
@@ -53,12 +54,14 @@
     "@typebot.io/emails": "workspace:*"
   },
   "devDependencies": {
-    "@typebot.io/schemas": "workspace:*",
     "@typebot.io/tsconfig": "workspace:*",
     "@types/bun": "^1.1.9",
     "@types/cli-progress": "^3.11.5",
     "@types/papaparse": "5.3.7",
     "@types/prompts": "2.4.4",
-    "tsx": "4.19.1"
+    "tsx": "4.19.1",
+    "@typebot.io/blocks-integrations": "workspace:*",
+    "@typebot.io/groups": "workspace:*",
+    "dotenv": "16.4.5"
   }
 }

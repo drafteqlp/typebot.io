@@ -1,9 +1,10 @@
 import { authenticatedProcedure } from "@/helpers/server/trpc";
+import { ClientToastError } from "@/lib/ClientToastError";
 import { TRPCError } from "@trpc/server";
+import { decrypt } from "@typebot.io/credentials/decrypt";
+import type { WhatsAppCredentials } from "@typebot.io/credentials/schemas";
 import { env } from "@typebot.io/env";
-import { decrypt } from "@typebot.io/lib/api/encryption/decrypt";
 import prisma from "@typebot.io/prisma";
-import type { WhatsAppCredentials } from "@typebot.io/whatsapp/schemas";
 import { z } from "@typebot.io/zod";
 import ky from "ky";
 
@@ -26,32 +27,37 @@ export const getSystemTokenInfo = authenticatedProcedure
         code: "NOT_FOUND",
         message: "Credentials not found",
       });
-    const {
-      data: { expires_at, scopes, app_id, application },
-    } = await ky
-      .get(
-        `${env.WHATSAPP_CLOUD_API_URL}/v17.0/debug_token?input_token=${credentials.systemUserAccessToken}`,
-        {
-          headers: {
-            Authorization: `Bearer ${credentials.systemUserAccessToken}`,
-          },
-        },
-      )
-      .json<{
-        data: {
-          app_id: string;
-          application: string;
-          expires_at: number;
-          scopes: string[];
-        };
-      }>();
 
-    return {
-      appId: app_id,
-      appName: application,
-      expiresAt: expires_at,
-      scopes,
-    };
+    try {
+      const {
+        data: { expires_at, scopes, app_id, application },
+      } = await ky
+        .get(
+          `${env.WHATSAPP_CLOUD_API_URL}/v17.0/debug_token?input_token=${credentials.systemUserAccessToken}`,
+          {
+            headers: {
+              Authorization: `Bearer ${credentials.systemUserAccessToken}`,
+            },
+          },
+        )
+        .json<{
+          data: {
+            app_id: string;
+            application: string;
+            expires_at: number;
+            scopes: string[];
+          };
+        }>();
+
+      return {
+        appId: app_id,
+        appName: application,
+        expiresAt: expires_at,
+        scopes,
+      };
+    } catch (err) {
+      throw await ClientToastError.fromUnkownError(err);
+    }
   });
 
 const getCredentials = async (

@@ -1,6 +1,6 @@
 import { TextInput } from "@/components/inputs/TextInput";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -20,6 +20,7 @@ import { ZodObjectLayout } from "../zodLayouts/ZodObjectLayout";
 type Props = {
   credentialsId: string;
   blockDef: ForgedBlockDefinition;
+  scope: "workspace" | "user";
   onUpdate: () => void;
 };
 
@@ -27,9 +28,9 @@ export const UpdateForgedCredentialsModalContent = ({
   credentialsId,
   blockDef,
   onUpdate,
+  scope,
 }: Props) => {
   const { workspace } = useWorkspace();
-  const { showToast } = useToast();
   const [name, setName] = useState("");
   const [data, setData] = useState<any>();
 
@@ -37,10 +38,16 @@ export const UpdateForgedCredentialsModalContent = ({
 
   const { data: existingCredentials, refetch: refetchCredentials } =
     trpc.credentials.getCredentials.useQuery(
-      {
-        workspaceId: workspace?.id as string,
-        credentialsId,
-      },
+      scope === "workspace"
+        ? {
+            scope: "workspace",
+            workspaceId: workspace?.id as string,
+            credentialsId,
+          }
+        : {
+            scope: "user",
+            credentialsId,
+          },
       {
         enabled: !!workspace?.id,
       },
@@ -56,9 +63,8 @@ export const UpdateForgedCredentialsModalContent = ({
     onMutate: () => setIsUpdating(true),
     onSettled: () => setIsUpdating(false),
     onError: (err) => {
-      showToast({
+      toast({
         description: err.message,
-        status: "error",
       });
     },
     onSuccess: () => {
@@ -70,15 +76,28 @@ export const UpdateForgedCredentialsModalContent = ({
   const updateCredentials = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!workspace || !blockDef.auth) return;
-    mutate({
-      credentialsId,
-      credentials: {
-        type: blockDef.id,
-        workspaceId: workspace.id,
-        name,
-        data,
-      } as Credentials,
-    });
+    mutate(
+      scope === "workspace"
+        ? {
+            credentialsId,
+            credentials: {
+              type: blockDef.id,
+              name: name ?? "My account",
+              data,
+            } as Credentials,
+            scope: "workspace",
+            workspaceId: workspace.id,
+          }
+        : {
+            scope: "user",
+            credentialsId,
+            credentials: {
+              type: blockDef.id,
+              name: name ?? "My account",
+              data,
+            } as Credentials,
+          },
+    );
   };
 
   if (!blockDef.auth) return null;
@@ -91,7 +110,8 @@ export const UpdateForgedCredentialsModalContent = ({
         <ModalBody as={Stack} spacing="6">
           <TextInput
             isRequired
-            label="Name"
+            label="Label"
+            moreInfoTooltip={`Choose a name to identify this ${blockDef.auth.name}`}
             defaultValue={name}
             onChange={setName}
             placeholder="My account"
@@ -112,7 +132,7 @@ export const UpdateForgedCredentialsModalContent = ({
             type="submit"
             isLoading={isUpdating}
             isDisabled={!data || Object.keys(data).length === 0}
-            colorScheme="blue"
+            colorScheme="orange"
           >
             Update
           </Button>

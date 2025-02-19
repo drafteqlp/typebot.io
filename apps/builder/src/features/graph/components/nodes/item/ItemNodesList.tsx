@@ -145,7 +145,13 @@ export const ItemNodesList = ({
   const groupId = typebot?.groups.at(groupIndex)?.id;
 
   return (
-    <Stack flex={1} spacing={1} maxW="full" onClick={stopPropagating}>
+    <Stack
+      flex={1}
+      spacing={1}
+      maxW="full"
+      onClick={stopPropagating}
+      isolation="isolate"
+    >
       <PlaceholderNode
         isVisible={showPlaceholders}
         isExpanded={expandedPlaceholderIndex === 0}
@@ -211,7 +217,7 @@ const DefaultItemNode = ({
       py="2"
       borderWidth="1px"
       borderColor={useColorModeValue("gray.300", undefined)}
-      bgColor={useColorModeValue("gray.50", "gray.850")}
+      bgColor={useColorModeValue("gray.50", "gray.900")}
       rounded="md"
       pos="relative"
       align="center"

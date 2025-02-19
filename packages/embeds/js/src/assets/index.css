@@ -129,6 +129,7 @@ pre {
 }
 
 .typebot-chat-view {
+  @apply pt-5 px-3;
   max-width: var(--typebot-chat-container-max-width);
   background-color: rgba(
     var(--typebot-chat-container-bg-rgb),
@@ -142,13 +143,13 @@ pre {
     var(--typebot-chat-container-border-rgb),
     var(--typebot-chat-container-border-opacity)
   );
-  padding-left: 20px;
-  padding-right: 20px;
   box-shadow: var(--typebot-chat-container-box-shadow);
 }
 
-@container (min-width: 480px) {
+/* TODO: Use @tailwindcss/container-queries*/
+@container (min-width: 432px) {
   .typebot-chat-view {
+    @apply pt-10 px-5;
     min-height: var(--typebot-chat-container-max-height);
     max-height: var(--typebot-chat-container-max-height);
     border-radius: var(--typebot-chat-container-border-radius);
@@ -360,7 +361,7 @@ pre {
   border-radius: var(--typebot-button-border-radius);
 }
 
-.typebot-date-input {
+.typebot-datetime-input {
   color-scheme: light;
   color: var(--typebot-input-color);
   background-color: var(--typebot-input-bg-color);
@@ -574,7 +575,12 @@ select option {
     var(--typebot-input-opacity)
   );
   box-shadow: var(--typebot-input-box-shadow);
-  max-width: 60vw;
+  border-width: var(--typebot-input-border-width);
+  border-color: rgba(
+    var(--typebot-input-border-rgb),
+    var(--typebot-input-border-opacity)
+  );
+  max-width: 350px;
   @apply flex flex-col pl-4 py-4 pr-8 gap-1;
 }
 
@@ -616,4 +622,13 @@ select option {
 
 [data-scope="progress"][data-part="circle-track"] {
   stroke: rgba(0, 0, 0, 0.5);
+}
+
+.typebot-buttons-input > [data-slot="list"] {
+  flex-direction: var(--typebot-buttons-input-flex-direction);
+  flex-wrap: wrap;
+}
+
+.typebot-buttons-input > .typebot-input {
+  max-width: 350px;
 }

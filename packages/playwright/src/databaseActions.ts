@@ -123,6 +123,7 @@ export const createWorkspaces = async (workspaces: Partial<Workspace>[]) => {
       name: "Free workspace",
       plan: Plan.FREE,
       ...workspace,
+      settings: workspace.settings ?? DbNull,
     })),
   });
   await prisma.memberInWorkspace.createMany({
@@ -139,8 +140,10 @@ export const updateUser = (data: Partial<User>) =>
   prisma.user.update({
     data: {
       ...data,
-      onboardingCategories: data.onboardingCategories ?? [],
-      displayedInAppNotifications: data.displayedInAppNotifications ?? DbNull,
+      onboardingCategories: data.onboardingCategories,
+      displayedInAppNotifications:
+        data.displayedInAppNotifications ?? undefined,
+      groupTitlesAutoGeneration: data.groupTitlesAutoGeneration ?? undefined,
     },
     where: {
       id: userId,

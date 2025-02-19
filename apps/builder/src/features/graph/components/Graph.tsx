@@ -1,13 +1,14 @@
-import { useUser } from "@/features/account/hooks/useUser";
 import { headerHeight } from "@/features/editor/constants";
 import { useTypebot } from "@/features/editor/providers/TypebotProvider";
+import { useUser } from "@/features/user/hooks/useUser";
 import { Fade, Flex, type FlexProps, useEventListener } from "@chakra-ui/react";
 import { createId } from "@paralleldrive/cuid2";
 import type { BlockV6 } from "@typebot.io/blocks-core/schemas/schema";
+import { InputBlockType } from "@typebot.io/blocks-inputs/constants";
 import { GraphNavigation } from "@typebot.io/prisma/enum";
 import type {
+  EdgeWithTotalUsers,
   TotalAnswers,
-  TotalVisitedEdges,
 } from "@typebot.io/schemas/features/analytics";
 import type { PublicTypebotV6 } from "@typebot.io/typebot/schemas/publicTypebot";
 import type { TypebotV6 } from "@typebot.io/typebot/schemas/typebot";
@@ -20,67 +21,68 @@ import { graphPositionDefaultValue } from "../constants";
 import { computeSelectBoxDimensions } from "../helpers/computeSelectBoxDimensions";
 import { isSelectBoxIntersectingWithElement } from "../helpers/isSelectBoxIntersectingWithElement";
 import { projectMouse } from "../helpers/projectMouse";
-import { useGroupsStore } from "../hooks/useGroupsStore";
+import { useSelectionStore } from "../hooks/useSelectionStore";
 import { useBlockDnd } from "../providers/GraphDndProvider";
 import { useGraph } from "../providers/GraphProvider";
 import type { Coordinates } from "../types";
+import { ElementsSelectionMenu } from "./ElementsSelectionMenu";
 import GraphElements from "./GraphElements";
-import { GroupSelectionMenu } from "./GroupSelectionMenu";
 import { SelectBox } from "./SelectBox";
 import { ZoomButtons } from "./ZoomButtons";
 
 const maxScale = 2;
-const minScale = 0.3;
+const minScale = 0.2;
 const zoomButtonsScaleBlock = 0.2;
 
 export const Graph = ({
   typebot,
   totalAnswers,
-  totalVisitedEdges,
+  edgesWithTotalUsers,
   onUnlockProPlanClick,
   ...props
 }: {
   typebot: TypebotV6 | PublicTypebotV6;
-  totalVisitedEdges?: TotalVisitedEdges[];
+  edgesWithTotalUsers?: EdgeWithTotalUsers[];
   totalAnswers?: TotalAnswers[];
   onUnlockProPlanClick?: () => void;
 } & FlexProps) => {
   const {
     draggedBlockType,
     setDraggedBlockType,
+    draggedEventType,
+    setDraggedEventType,
     draggedBlock,
     setDraggedBlock,
     draggedItem,
     setDraggedItem,
   } = useBlockDnd();
-  const { createGroup } = useTypebot();
+  const { createGroup, createEvent } = useTypebot();
   const { user } = useUser();
   const {
     isReadOnly,
     setGraphPosition: setGlobalGraphPosition,
-    setOpenedBlockId,
-    setOpenedItemId,
+    setOpenedNodeId,
     setPreviewingEdge,
     connectingIds,
   } = useGraph();
-  const isDraggingGraph = useGroupsStore((state) => state.isDraggingGraph);
-  const setIsDraggingGraph = useGroupsStore(
+  const isDraggingGraph = useSelectionStore((state) => state.isDraggingGraph);
+  const setIsDraggingGraph = useSelectionStore(
     (state) => state.setIsDraggingGraph,
   );
-  const focusedGroups = useGroupsStore(
-    useShallow((state) => state.focusedGroups),
+  const focusedElementsId = useSelectionStore(
+    useShallow((state) => state.focusedElementsId),
   );
   const {
-    setGroupsCoordinates,
-    blurGroups,
-    setFocusedGroups,
-    updateGroupCoordinates,
-  } = useGroupsStore(
+    setElementsCoordinates,
+    blurElements,
+    setFocusedElements,
+    updateElementCoordinates,
+  } = useSelectionStore(
     useShallow((state) => ({
-      updateGroupCoordinates: state.updateGroupCoordinates,
-      setGroupsCoordinates: state.setGroupsCoordinates,
-      blurGroups: state.blurGroups,
-      setFocusedGroups: state.setFocusedGroups,
+      updateElementCoordinates: state.updateElementCoordinates,
+      setElementsCoordinates: state.setElementsCoordinates,
+      blurElements: state.blurElements,
+      setFocusedElements: state.setFocusedElements,
     })),
   );
 
@@ -102,8 +104,8 @@ export const Graph = ({
       }
     | undefined
   >();
-  const [groupRects, setGroupRects] = useState<
-    { groupId: string; rect: DOMRect }[] | undefined
+  const [elementRects, setElementRects] = useState<
+    { elementId: string; rect: DOMRect }[] | undefined
   >();
   const [isDragging, setIsDragging] = useState(false);
 
@@ -138,30 +140,48 @@ export const Graph = ({
   }, [debouncedGraphPosition, setGlobalGraphPosition]);
 
   useEffect(() => {
-    setGroupsCoordinates(typebot.groups);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setElementsCoordinates({
+      groups: typebot.groups,
+      events: typebot.events,
+    });
   }, []);
 
   const handleMouseUp = (e: MouseEvent) => {
     if (!typebot) return;
     if (draggedItem) setDraggedItem(undefined);
-    if (!draggedBlock && !draggedBlockType) return;
+    if (!draggedBlock && !draggedBlockType && !draggedEventType) return;
 
     const coordinates = projectMouse(
       { x: e.clientX, y: e.clientY },
       graphPosition,
     );
     const id = createId();
-    updateGroupCoordinates(id, coordinates);
-    const newBlockId = createGroup({
-      id,
-      ...coordinates,
-      block: draggedBlock ?? (draggedBlockType as BlockV6["type"]),
-      indices: { groupIndex: typebot.groups.length, blockIndex: 0 },
-    });
-    setDraggedBlock(undefined);
-    setDraggedBlockType(undefined);
-    if (newBlockId) setOpenedBlockId(newBlockId);
+    updateElementCoordinates(id, coordinates);
+    if (draggedEventType) {
+      createEvent({
+        id,
+        type: draggedEventType,
+        graphCoordinates: coordinates,
+      });
+      setDraggedEventType(undefined);
+      setOpenedNodeId(id);
+    } else {
+      const newBlockId = createGroup({
+        id,
+        ...coordinates,
+        block: draggedBlock ?? (draggedBlockType as BlockV6["type"]),
+        indices: { groupIndex: typebot.groups.length, blockIndex: 0 },
+      });
+      setDraggedBlock(undefined);
+      setDraggedBlockType(undefined);
+      if (
+        newBlockId &&
+        draggedBlockType !== InputBlockType.CHOICE &&
+        draggedBlockType !== InputBlockType.PICTURE_CHOICE
+      ) {
+        setOpenedNodeId(newBlockId);
+      }
+    }
   };
 
   const handleCaptureMouseDown = (e: MouseEvent) => {
@@ -169,19 +189,18 @@ export const Graph = ({
     if (isRightClick) e.stopPropagation();
   };
 
-  const handlePointerUp = () => {
-    if (isDraggingGraph) return;
+  const handlePointerUp = (e: MouseEvent) => {
+    if (isDraggingGraph || e.button === 2) return;
     if (
       !selectBoxCoordinates ||
       Math.abs(selectBoxCoordinates?.dimension.width) +
         Math.abs(selectBoxCoordinates?.dimension.height) <
         5
     ) {
-      blurGroups();
+      blurElements();
     }
     setSelectBoxCoordinates(undefined);
-    setOpenedBlockId(undefined);
-    setOpenedItemId(undefined);
+    setOpenedNodeId(undefined);
     setPreviewingEdge(undefined);
   };
 
@@ -203,27 +222,29 @@ export const Graph = ({
           return;
         }
         if (isReadOnly) return;
-        const currentGroupRects = props.first
-          ? Array.from(document.querySelectorAll(".group")).map((element) => {
-              return {
-                groupId: element.id.split("-")[1],
-                rect: element.getBoundingClientRect(),
-              };
-            })
-          : groupRects;
-        if (props.first) setGroupRects(currentGroupRects);
+        const currentElementRects = props.first
+          ? Array.from(document.querySelectorAll("[data-selectable]")).map(
+              (element) => {
+                return {
+                  elementId: (element as HTMLDivElement).dataset.selectable!,
+                  rect: element.getBoundingClientRect(),
+                };
+              },
+            )
+          : elementRects;
+        if (props.first) setElementRects(currentElementRects);
         const dimensions = computeSelectBoxDimensions(props);
         setSelectBoxCoordinates(dimensions);
-        const selectedGroups = currentGroupRects!.reduce<string[]>(
-          (groups, element) => {
+        const selectedElements = currentElementRects!.reduce<string[]>(
+          (acc, element) => {
             if (isSelectBoxIntersectingWithElement(dimensions, element.rect)) {
-              return [...groups, element.groupId];
+              return [...acc, element.elementId];
             }
-            return groups;
+            return acc;
           },
           [],
         );
-        if (selectedGroups.length > 0) setFocusedGroups(selectedGroups);
+        if (selectedElements.length > 0) setFocusedElements(selectedElements);
       },
       onWheel: ({ shiftKey, delta: [dx, dy], pinching }) => {
         if (pinching) return;
@@ -245,6 +266,18 @@ export const Graph = ({
         modifierKey: "ctrlKey",
       },
       drag: { pointer: { keys: false } },
+    },
+  );
+
+  // Prevent back/forward navigation in Firefox
+  useEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+    },
+    graphContainerRef.current,
+    {
+      passive: false,
     },
   );
 
@@ -326,7 +359,6 @@ export const Graph = ({
       setIsDraggingGraph(false);
       setIsDragging(false);
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window as any,
   );
 
@@ -360,11 +392,11 @@ export const Graph = ({
       {!isReadOnly && (
         <>
           {selectBoxCoordinates && <SelectBox {...selectBoxCoordinates} />}
-          <Fade in={!isReadOnly && focusedGroups.length > 1}>
-            <GroupSelectionMenu
+          <Fade in={!isReadOnly && focusedElementsId.length > 1}>
+            <ElementsSelectionMenu
               graphPosition={graphPosition}
-              focusedGroups={focusedGroups}
-              blurGroups={blurGroups}
+              focusedElementIds={focusedElementsId}
+              blurElements={blurElements}
               isReadOnly={isReadOnly}
             />
           </Fade>
@@ -392,7 +424,7 @@ export const Graph = ({
           groups={typebot.groups}
           events={typebot.events}
           totalAnswers={totalAnswers}
-          totalVisitedEdges={totalVisitedEdges}
+          edgesWithTotalUsers={edgesWithTotalUsers}
           onUnlockProPlanClick={onUnlockProPlanClick}
         />
       </Flex>

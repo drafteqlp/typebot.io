@@ -3,7 +3,19 @@ import { TRPCError } from "@trpc/server";
 import prisma from "@typebot.io/prisma";
 import { workspaceSchema } from "@typebot.io/workspaces/schemas";
 import { z } from "@typebot.io/zod";
+import { getUserModeInWorkspace } from "../helpers/getUserRoleInWorkspace";
 import { isReadWorkspaceFobidden } from "../helpers/isReadWorkspaceFobidden";
+
+const inAppWorkspaceSchema = workspaceSchema.omit({
+  chatsLimitFirstEmailSentAt: true,
+  chatsLimitSecondEmailSentAt: true,
+  storageLimitFirstEmailSentAt: true,
+  storageLimitSecondEmailSentAt: true,
+  customStorageLimit: true,
+  additionalChatsIndex: true,
+  additionalStorageIndex: true,
+  isQuarantined: true,
+});
 
 export const getWorkspace = authenticatedProcedure
   .meta({
@@ -26,16 +38,8 @@ export const getWorkspace = authenticatedProcedure
   )
   .output(
     z.object({
-      workspace: workspaceSchema.omit({
-        chatsLimitFirstEmailSentAt: true,
-        chatsLimitSecondEmailSentAt: true,
-        storageLimitFirstEmailSentAt: true,
-        storageLimitSecondEmailSentAt: true,
-        customStorageLimit: true,
-        additionalChatsIndex: true,
-        additionalStorageIndex: true,
-        isQuarantined: true,
-      }),
+      workspace: inAppWorkspaceSchema,
+      currentUserMode: z.enum(["read", "write", "guest"]),
     }),
   )
   .query(async ({ input: { workspaceId }, ctx: { user } }) => {
@@ -47,10 +51,11 @@ export const getWorkspace = authenticatedProcedure
     if (!workspace || isReadWorkspaceFobidden(workspace, user))
       throw new TRPCError({
         code: "NOT_FOUND",
-        message: "No workspaces found",
+        message: "Workspace not found",
       });
 
     return {
-      workspace,
+      workspace: inAppWorkspaceSchema.parse(workspace),
+      currentUserMode: getUserModeInWorkspace(user.id, workspace.members),
     };
   });

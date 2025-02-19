@@ -1,8 +1,8 @@
 import { blockHasItems, isInputBlock } from "@typebot.io/blocks-core/helpers";
 import type { Block } from "@typebot.io/blocks-core/schemas/schema";
-import { getBlockById } from "@typebot.io/groups/helpers";
+import type { SessionState } from "@typebot.io/chat-session/schemas";
+import { getBlockById } from "@typebot.io/groups/helpers/getBlockById";
 import { byId, isDefined } from "@typebot.io/lib/utils";
-import type { SessionState } from "./schemas/chatSession";
 
 type Props = {
   typebotsQueue: SessionState["typebotsQueue"];
@@ -93,8 +93,10 @@ const computePossibleNextInputBlocks = ({
   if (outgoingEdgeIds.length > 0 || group.blocks.length !== blockIndex + 1)
     return possibleNextInputBlocks;
 
-  if (typebotsQueue.length > 1) {
-    const nextEdgeId = typebotsQueue[0].edgeIdToTriggerWhenDone;
+  if (typebotsQueue.length > 1 || typebotsQueue[0].queuedEdgeIds) {
+    const nextEdgeId =
+      typebotsQueue[0].edgeIdToTriggerWhenDone ??
+      typebotsQueue[0].queuedEdgeIds?.[0];
     const to = typebotsQueue[1].typebot.edges.find(byId(nextEdgeId))?.to;
     if (!to) return possibleNextInputBlocks;
     const blockId =

@@ -2,6 +2,7 @@ import { PlusIcon, SettingsIcon } from "@/components/icons";
 import { useTypebot } from "@/features/editor/providers/TypebotProvider";
 import { useGraph } from "@/features/graph/providers/GraphProvider";
 import {
+  Box,
   Editable,
   EditablePreview,
   EditableTextarea,
@@ -23,7 +24,6 @@ import type { ItemIndices } from "@typebot.io/blocks-core/schemas/items/types";
 import type { ButtonItem } from "@typebot.io/blocks-inputs/choice/schema";
 import { convertStrToList } from "@typebot.io/lib/convertStrToList";
 import { isEmpty } from "@typebot.io/lib/utils";
-import type React from "react";
 import { useRef, useState } from "react";
 import { ButtonsItemSettings } from "./ButtonsItemSettings";
 
@@ -35,8 +35,10 @@ type Props = {
 
 export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
   const { t } = useTranslate();
+  const [isMouseOverAddButtonHitbox, setIsMouseOverAddButtonHitbox] =
+    useState(false);
   const { deleteItem, updateItem, createItem } = useTypebot();
-  const { openedItemId, setOpenedItemId } = useGraph();
+  const { openedNodeId, setOpenedNodeId } = useGraph();
   const [itemValue, setItemValue] = useState(
     item.content ??
       (indices.itemIndex === 0
@@ -45,7 +47,7 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
   );
   const editableRef = useRef<HTMLDivElement | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
-  const arrowColor = useColorModeValue("white", "gray.800");
+  const arrowColor = useColorModeValue("white", "gray.900");
 
   const handleMouseDown = (e: React.MouseEvent) => e.stopPropagation();
 
@@ -69,7 +71,7 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
       itemValue !== "" &&
       itemValue !== t("blocks.inputs.button.clickToEdit.label")
     )
-      handlePlusClick();
+      appendButton();
   };
 
   const handleEditableChange = (val: string) => {
@@ -87,7 +89,7 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
     }
   };
 
-  const handlePlusClick = () => {
+  const appendButton = () => {
     const itemIndex = indices.itemIndex + 1;
     createItem({}, { ...indices, itemIndex });
   };
@@ -100,11 +102,11 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
     <Popover
       placement="right"
       isLazy
-      isOpen={openedItemId === item.id}
+      isOpen={openedNodeId === item.id}
       closeOnBlur={false}
     >
       <PopoverAnchor>
-        <Flex px={4} py={2} justify="center" w="90%" pos="relative">
+        <Flex px={4} py={2} justify="center" w="90%">
           <Editable
             ref={editableRef}
             flex="1"
@@ -133,7 +135,6 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
               onWheelCapture={(e) => e.stopPropagation()}
             />
           </Editable>
-          <HitboxExtension />
           <SlideFade
             offsetY="0px"
             offsetX="-10px"
@@ -145,36 +146,46 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
             }}
             unmountOnExit
           >
-            <Flex bgColor={useColorModeValue("white", "gray.800")} rounded="md">
+            <Flex bgColor={useColorModeValue("white", "gray.900")} rounded="md">
               <IconButton
                 aria-label={t("blocks.inputs.button.openSettings.ariaLabel")}
                 icon={<SettingsIcon />}
                 variant="ghost"
                 size="sm"
                 shadow="md"
-                onClick={() => setOpenedItemId(item.id)}
+                onClick={() => setOpenedNodeId(item.id)}
               />
             </Flex>
           </SlideFade>
-          <Fade
-            in={isMouseOver}
-            style={{
-              position: "absolute",
-              bottom: "-15px",
-              zIndex: 3,
-              left: "90px",
-            }}
-            unmountOnExit
+          <Box
+            pos="absolute"
+            w="full"
+            left="0px"
+            h="30px"
+            bottom="-18px"
+            zIndex={10}
+            onClick={appendButton}
+            onMouseEnter={() => setIsMouseOverAddButtonHitbox(true)}
+            onMouseLeave={() => setIsMouseOverAddButtonHitbox(false)}
           >
-            <IconButton
-              aria-label={t("blocks.inputs.button.addItem.ariaLabel")}
-              icon={<PlusIcon />}
-              size="xs"
-              shadow="md"
-              colorScheme="gray"
-              onClick={handlePlusClick}
-            />
-          </Fade>
+            <Fade
+              in={isMouseOverAddButtonHitbox}
+              style={{
+                position: "absolute",
+                top: "3px",
+                left: "90px",
+              }}
+              unmountOnExit
+            >
+              <IconButton
+                aria-label={t("blocks.inputs.button.addItem.ariaLabel")}
+                icon={<PlusIcon />}
+                size="xs"
+                shadow="md"
+                colorScheme="gray"
+              />
+            </Fade>
+          </Box>
         </Flex>
       </PopoverAnchor>
       <Portal>
@@ -184,7 +195,7 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
             py="6"
             overflowY="auto"
             maxH="400px"
-            shadow="lg"
+            shadow="md"
             ref={ref}
           >
             <ButtonsItemSettings
@@ -197,7 +208,3 @@ export const ButtonsItemNode = ({ item, indices, isMouseOver }: Props) => {
     </Popover>
   );
 };
-
-const HitboxExtension = () => (
-  <Flex h="full" w="10px" pos="absolute" top="0" left="-10px" />
-);

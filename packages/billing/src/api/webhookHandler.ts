@@ -73,6 +73,7 @@ export const webhookHandler = async (
                 workspaceId,
                 userId: m.userId,
                 data: {
+                  prevPlan: Plan.FREE,
                   plan,
                 },
               })),
@@ -106,6 +107,7 @@ export const webhookHandler = async (
                 workspaceId,
                 userId,
                 data: {
+                  prevPlan: Plan.FREE,
                   plan: Plan.CUSTOM,
                 },
               },
@@ -227,14 +229,16 @@ export const webhookHandler = async (
               (invoice) => invoice.amount_due > prices["PRO"] * 100,
             );
 
-          const workspaceExist =
-            (await prisma.workspace.count({
-              where: {
-                stripeId: subscription.customer as string,
-              },
-            })) > 0;
+          const existingWorkspace = await prisma.workspace.findFirst({
+            where: {
+              stripeId: subscription.customer as string,
+            },
+            select: {
+              plan: true,
+            },
+          });
 
-          if (!workspaceExist)
+          if (!existingWorkspace)
             return res.send({ message: "Workspace not found, skipping..." });
 
           const workspace = await prisma.workspace.update({
@@ -264,6 +268,7 @@ export const webhookHandler = async (
               workspaceId: workspace.id,
               userId: m.userId,
               data: {
+                prevPlan: existingWorkspace.plan,
                 plan: Plan.FREE,
               },
             })),

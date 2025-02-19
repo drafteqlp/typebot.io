@@ -1,20 +1,23 @@
 import { isForgedBlockType } from "@typebot.io/blocks-core/helpers";
 import { IntegrationBlockType } from "@typebot.io/blocks-integrations/constants";
 import type { ChatCompletionOpenAIOptions } from "@typebot.io/blocks-integrations/openai/schema";
+import { getSession } from "@typebot.io/chat-session/queries/getSession";
+import { updateSession } from "@typebot.io/chat-session/queries/updateSession";
+import type { SessionState } from "@typebot.io/chat-session/schemas";
+import { decryptV2 } from "@typebot.io/credentials/decryptV2";
+import { getCredentials } from "@typebot.io/credentials/getCredentials";
 import { forgedBlocks } from "@typebot.io/forge-repository/definitions";
 import type { AsyncVariableStore } from "@typebot.io/forge/types";
-import { getBlockById } from "@typebot.io/groups/helpers";
-import { decryptV2 } from "@typebot.io/lib/api/encryption/decryptV2";
+import { getBlockById } from "@typebot.io/groups/helpers/getBlockById";
+import { parseUnknownError } from "@typebot.io/lib/parseUnknownError";
+import { isDefined } from "@typebot.io/lib/utils";
 import { deepParseVariables } from "@typebot.io/variables/deepParseVariables";
 import {
   type ParseVariablesOptions,
   parseVariables,
 } from "@typebot.io/variables/parseVariables";
 import { OpenAI } from "openai";
-import { getCredentials } from "../queries/getCredentials";
-import { getSession } from "../queries/getSession";
 import { saveSetVariableHistoryItems } from "../queries/saveSetVariableHistoryItems";
-import { updateSession } from "../queries/updateSession";
 import { updateVariablesInSession } from "../updateVariablesInSession";
 import { getOpenAIChatCompletionStream } from "./legacy/getOpenAIChatCompletionStream";
 
@@ -30,15 +33,22 @@ export const getMessageStream = async ({
   stream?: ReadableStream<any>;
   status?: number;
   message?: string;
+  details?: string;
+  context?: string;
 }> => {
   const session = await getSession(sessionId);
 
-  if (!session?.state || !session.state.currentBlockId)
+  if (!session?.state)
     return { status: 404, message: "Could not find session" };
 
+  let newSessionState: SessionState = session.state;
+
+  if (!newSessionState.currentBlockId)
+    return { status: 404, message: "Could not find current block" };
+
   const { group, block } = getBlockById(
-    session.state.currentBlockId,
-    session.state.typebotsQueue[0].typebot.groups,
+    newSessionState.currentBlockId,
+    newSessionState.typebotsQueue[0].typebot.groups,
   );
   if (!block || !group)
     return {
@@ -55,7 +65,7 @@ export const getMessageStream = async ({
   if (block.type === IntegrationBlockType.OPEN_AI && messages) {
     try {
       const stream = await getOpenAIChatCompletionStream(
-        session.state,
+        newSessionState,
         block.options as ChatCompletionOpenAIOptions,
         messages,
       );
@@ -98,7 +108,10 @@ export const getMessageStream = async ({
   try {
     if (!block.options.credentialsId)
       return { status: 404, message: "Could not find credentials" };
-    const credentials = await getCredentials(block.options.credentialsId);
+    const credentials = await getCredentials(
+      block.options.credentialsId,
+      session.state.workspaceId,
+    );
     if (!credentials)
       return { status: 404, message: "Could not find credentials" };
     const decryptedCredentials = await decryptV2(
@@ -107,32 +120,44 @@ export const getMessageStream = async ({
     );
 
     const variables: AsyncVariableStore = {
-      list: () => session.state.typebotsQueue[0].typebot.variables,
+      list: () => newSessionState.typebotsQueue[0].typebot.variables,
       get: (id: string) => {
-        const variable = session.state.typebotsQueue[0].typebot.variables.find(
-          (variable) => variable.id === id,
-        );
+        const variable =
+          newSessionState.typebotsQueue[0].typebot.variables.find(
+            (variable) => variable.id === id,
+          );
         return variable?.value;
       },
       parse: (text: string, params?: ParseVariablesOptions) =>
         parseVariables(
-          session.state.typebotsQueue[0].typebot.variables,
+          newSessionState.typebotsQueue[0].typebot.variables,
           params,
         )(text),
-      set: async (id: string, value: unknown) => {
-        const variable = session.state.typebotsQueue[0].typebot.variables.find(
-          (variable) => variable.id === id,
-        );
-        if (!variable) return;
+      set: async (variables) => {
+        const newVariables = variables
+          .map((variable) => {
+            const existingVariable =
+              newSessionState.typebotsQueue[0].typebot.variables.find(
+                (v) => variable.id === v.id,
+              );
+            if (!existingVariable) return;
+            return {
+              ...existingVariable,
+              value: variable.value,
+            };
+          })
+          .filter(isDefined);
+        if (newVariables.length === 0) return;
         const { updatedState, newSetVariableHistory } =
           updateVariablesInSession({
-            newVariables: [{ ...variable, value }],
-            state: session.state,
-            currentBlockId: session.state.currentBlockId,
+            newVariables,
+            state: newSessionState,
+            currentBlockId: newSessionState.currentBlockId,
           });
+        newSessionState = updatedState;
         if (
           newSetVariableHistory.length > 0 &&
-          session.state.typebotsQueue[0].resultId
+          newSessionState.typebotsQueue[0].resultId
         )
           await saveSetVariableHistoryItems(newSetVariableHistory);
         await updateSession({
@@ -142,29 +167,34 @@ export const getMessageStream = async ({
         });
       },
     };
-    const { stream, httpError } = await action.run.stream.run({
+    const { stream, error } = await action.run.stream.run({
       credentials: decryptedCredentials,
       options: deepParseVariables(
-        session.state.typebotsQueue[0].typebot.variables,
+        newSessionState.typebotsQueue[0].typebot.variables,
       )(block.options),
       variables,
     });
-    if (httpError) return httpError;
+    if (error)
+      return {
+        status: 500,
+        message: error.description,
+        details: error.details,
+        context: error.context,
+      };
 
     if (!stream) return { status: 500, message: "Could not create stream" };
 
     return { stream };
   } catch (error) {
-    if (error instanceof OpenAI.APIError) {
-      const { message } = error;
-      return {
-        status: 500,
-        message,
-      };
-    }
+    const parsedError = await parseUnknownError({
+      err: error,
+      context: "While streaming message",
+    });
     return {
       status: 500,
-      message: "Could not create stream",
+      message: parsedError.description,
+      details: parsedError.details,
+      context: parsedError.context,
     };
   }
 };

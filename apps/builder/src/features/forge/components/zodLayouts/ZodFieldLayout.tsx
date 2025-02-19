@@ -55,7 +55,6 @@ const mdComponents = {
   ),
 } satisfies Components;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export const ZodFieldLayout = ({
   data,
   schema,
@@ -202,6 +201,7 @@ export const ZodFieldLayout = ({
             options={blockOptions}
             blockDef={blockDef}
             label={layout.label}
+            credentialsScope="workspace"
             helperText={
               layout?.helperText ? (
                 <Markdown components={mdComponents}>
@@ -278,6 +278,7 @@ export const ZodFieldLayout = ({
             onChange={onDataChange}
             width={width}
             debounceTimeout={layout?.isDebounceDisabled ? 0 : undefined}
+            withLineNumbers={true}
           />
         );
       return (
@@ -300,6 +301,8 @@ export const ZodFieldLayout = ({
         />
       );
     }
+    default:
+      return null;
   }
 };
 

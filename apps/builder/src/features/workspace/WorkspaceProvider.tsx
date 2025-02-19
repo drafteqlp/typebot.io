@@ -1,13 +1,12 @@
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import { byId } from "@typebot.io/lib/utils";
-import { WorkspaceRole } from "@typebot.io/prisma/enum";
 import type { Workspace } from "@typebot.io/workspaces/schemas";
 import { useRouter } from "next/router";
 import type { ReactNode } from "react";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useUser } from "../account/hooks/useUser";
 import { useTypebot } from "../editor/providers/TypebotProvider";
+import { useUser } from "../user/hooks/useUser";
 import { parseNewName } from "./helpers/parseNewName";
 import { setWorkspaceIdInLocalStorage } from "./helpers/setWorkspaceIdInLocalStorage";
 
@@ -23,13 +22,18 @@ export type WorkspaceInApp = Omit<
   | "isQuarantined"
 >;
 
+type WorkspaceUpdateProps = {
+  icon?: string;
+  name?: string;
+};
+
 const workspaceContext = createContext<{
   workspaces: Pick<Workspace, "id" | "name" | "icon" | "plan">[];
   workspace?: WorkspaceInApp;
-  currentRole?: WorkspaceRole;
+  currentUserMode?: "read" | "write" | "guest";
   switchWorkspace: (workspaceId: string) => void;
   createWorkspace: (name?: string) => Promise<void>;
-  updateWorkspace: (updates: { icon?: string; name?: string }) => void;
+  updateWorkspace: (updates: WorkspaceUpdateProps) => void;
   deleteCurrentWorkspace: () => Promise<void>;
   //@ts-ignore
 }>({});
@@ -74,42 +78,29 @@ export const WorkspaceProvider = ({
     { enabled: !!workspaceId },
   );
 
-  const { data: membersData } = trpc.workspace.listMembersInWorkspace.useQuery(
-    { workspaceId: workspaceId as string },
-    { enabled: !!workspaceId },
-  );
-
   const workspace = workspaceData?.workspace;
-  const members = membersData?.members;
-
-  const { showToast } = useToast();
 
   const createWorkspaceMutation = trpc.workspace.createWorkspace.useMutation({
-    onError: (error) => showToast({ description: error.message }),
+    onError: (error) => toast({ description: error.message }),
     onSuccess: async () => {
       trpcContext.workspace.listWorkspaces.invalidate();
     },
   });
 
   const updateWorkspaceMutation = trpc.workspace.updateWorkspace.useMutation({
-    onError: (error) => showToast({ description: error.message }),
+    onError: (error) => toast({ description: error.message }),
     onSuccess: async () => {
       trpcContext.workspace.getWorkspace.invalidate();
     },
   });
 
   const deleteWorkspaceMutation = trpc.workspace.deleteWorkspace.useMutation({
-    onError: (error) => showToast({ description: error.message }),
+    onError: (error) => toast({ description: error.message }),
     onSuccess: async () => {
       trpcContext.workspace.listWorkspaces.invalidate();
       setWorkspaceId(undefined);
     },
   });
-
-  const currentRole = members?.find(
-    (member) =>
-      member.user.email === user?.email && member.workspaceId === workspaceId,
-  )?.role;
 
   useEffect(() => {
     if (
@@ -128,15 +119,13 @@ export const WorkspaceProvider = ({
 
     const defaultWorkspaceId = lastWorspaceId
       ? workspaces.find(byId(lastWorspaceId))?.id
-      : members?.find((member) => member.role === WorkspaceRole.ADMIN)
-          ?.workspaceId;
+      : workspaces[0].id;
 
     const newWorkspaceId = defaultWorkspaceId ?? workspaces[0].id;
     setWorkspaceIdInLocalStorage(newWorkspaceId);
     setWorkspaceId(newWorkspaceId);
   }, [
     isRouterReady,
-    members,
     pathname,
     query.workspaceId,
     typebot?.workspaceId,
@@ -172,7 +161,7 @@ export const WorkspaceProvider = ({
     setWorkspaceId(workspace.id);
   };
 
-  const updateWorkspace = (updates: { icon?: string; name?: string }) => {
+  const updateWorkspace = (updates: WorkspaceUpdateProps) => {
     if (!workspaceId) return;
     updateWorkspaceMutation.mutate({
       workspaceId,
@@ -190,7 +179,7 @@ export const WorkspaceProvider = ({
       value={{
         workspaces,
         workspace,
-        currentRole,
+        currentUserMode: workspaceData?.currentUserMode,
         switchWorkspace,
         createWorkspace,
         updateWorkspace,

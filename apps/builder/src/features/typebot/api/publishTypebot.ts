@@ -3,15 +3,18 @@ import { authenticatedProcedure } from "@/helpers/server/trpc";
 import { TRPCError } from "@trpc/server";
 import { InputBlockType } from "@typebot.io/blocks-inputs/constants";
 import { env } from "@typebot.io/env";
-import { parseGroups } from "@typebot.io/groups/schemas";
+import { parseGroups } from "@typebot.io/groups/helpers/parseGroups";
 import prisma from "@typebot.io/prisma";
 import { Plan } from "@typebot.io/prisma/enum";
 import { computeRiskLevel } from "@typebot.io/radar";
+import { isTypebotVersionAtLeastV6 } from "@typebot.io/schemas/helpers/isTypebotVersionAtLeastV6";
 import { settingsSchema } from "@typebot.io/settings/schemas";
+import type { TelemetryEvent } from "@typebot.io/telemetry/schemas";
+import { sendMessage } from "@typebot.io/telemetry/sendMessage";
 import { trackEvents } from "@typebot.io/telemetry/trackEvents";
 import { themeSchema } from "@typebot.io/theme/schemas";
 import { edgeSchema } from "@typebot.io/typebot/schemas/edge";
-import { startEventSchema } from "@typebot.io/typebot/schemas/events/start/schema";
+import { publicTypebotSchemaV6 } from "@typebot.io/typebot/schemas/publicTypebot";
 import { typebotV6Schema } from "@typebot.io/typebot/schemas/typebot";
 import { variableSchema } from "@typebot.io/variables/schemas";
 import { z } from "@typebot.io/zod";
@@ -104,13 +107,10 @@ export const publishTypebot = authenticatedProcedure
         });
 
     if (riskLevel > 0 && riskLevel !== existingTypebot.riskLevel) {
-      if (env.MESSAGE_WEBHOOK_URL && riskLevel !== 100 && riskLevel > 60)
-        await fetch(env.MESSAGE_WEBHOOK_URL, {
-          method: "POST",
-          body: `⚠️ Suspicious typebot to be reviewed: ${existingTypebot.name} (${env.NEXTAUTH_URL}/typebots/${existingTypebot.id}/edit) (workspace: ${existingTypebot.workspaceId})`,
-        }).catch((err) => {
-          console.error("Failed to send message", err);
-        });
+      if (riskLevel !== 100 && riskLevel > 60)
+        await sendMessage(
+          `⚠️ Suspicious typebot to be reviewed: ${existingTypebot.name} (${env.NEXTAUTH_URL}/typebots/${existingTypebot.id}/edit) (workspace: ${existingTypebot.workspaceId})`,
+        );
 
       await prisma.typebot.updateMany({
         where: {
@@ -135,7 +135,7 @@ export const publishTypebot = authenticatedProcedure
       }
     }
 
-    const publishEvents = await parseTypebotPublishEvents({
+    const publishEvents: TelemetryEvent[] = await parseTypebotPublishEvents({
       existingTypebot,
       userId: user.id,
       hasFileUploadBlocks,
@@ -153,8 +153,8 @@ export const publishTypebot = authenticatedProcedure
             typebotVersion: existingTypebot.version,
           }),
           events:
-            (existingTypebot.version === "6"
-              ? z.tuple([startEventSchema])
+            (isTypebotVersionAtLeastV6(existingTypebot.version)
+              ? publicTypebotSchemaV6.shape.events
               : z.null()
             ).parse(existingTypebot.events) ?? undefined,
           settings: settingsSchema.parse(existingTypebot.settings),
@@ -162,7 +162,7 @@ export const publishTypebot = authenticatedProcedure
           theme: themeSchema.parse(existingTypebot.theme),
         },
       });
-    else
+    else {
       await prisma.publicTypebot.createMany({
         data: {
           version: existingTypebot.version,
@@ -172,8 +172,8 @@ export const publishTypebot = authenticatedProcedure
             typebotVersion: existingTypebot.version,
           }),
           events:
-            (existingTypebot.version === "6"
-              ? z.tuple([startEventSchema])
+            (isTypebotVersionAtLeastV6(existingTypebot.version)
+              ? publicTypebotSchemaV6.shape.events
               : z.null()
             ).parse(existingTypebot.events) ?? undefined,
           settings: settingsSchema.parse(existingTypebot.settings),
@@ -181,20 +181,18 @@ export const publishTypebot = authenticatedProcedure
           theme: themeSchema.parse(existingTypebot.theme),
         },
       });
-
-    await trackEvents([
-      ...publishEvents,
-      {
+      publishEvents.push({
         name: "Typebot published",
         workspaceId: existingTypebot.workspaceId,
         typebotId: existingTypebot.id,
         userId: user.id,
         data: {
-          name: existingTypebot.name,
           isFirstPublish: existingTypebot.publishedTypebot ? undefined : true,
         },
-      },
-    ]);
+      });
+    }
+
+    await trackEvents(publishEvents);
 
     return { message: "success" };
   });

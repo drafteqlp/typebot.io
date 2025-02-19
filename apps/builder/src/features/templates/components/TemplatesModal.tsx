@@ -1,4 +1,5 @@
-import { useToast } from "@/hooks/useToast";
+import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
+import { toast } from "@/lib/toast";
 import {
   Button,
   HStack,
@@ -24,7 +25,7 @@ import type { TemplateProps } from "../types";
 type Props = {
   isOpen: boolean;
   onClose: () => void;
-  onTypebotChoose: (typebot: Typebot) => void;
+  onTypebotChoose: (typebot: Typebot, fromTemplate: string) => void;
   isLoading: boolean;
 };
 
@@ -35,26 +36,34 @@ export const TemplatesModal = ({
   isLoading,
 }: Props) => {
   const { t } = useTranslate();
-  const templateCardBackgroundColor = useColorModeValue("white", "gray.800");
+  const templateCardBackgroundColor = useColorModeValue("white", "gray.900");
   const [typebot, setTypebot] = useState<Typebot>();
   const templates = useTemplates();
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateProps>(
     templates[0],
   );
   const [isFirstTemplateLoaded, setIsFirstTemplateLoaded] = useState(false);
-  const { showToast } = useToast();
+  const { workspace } = useWorkspace();
 
   const fetchTemplate = useCallback(
     async (template: TemplateProps) => {
+      if (!workspace?.id) return;
       setSelectedTemplate(template);
       const { data, error } = await sendRequest(
         `/templates/${template.fileName}`,
       );
       if (error)
-        return showToast({ title: error.name, description: error.message });
-      setTypebot({ ...(data as Typebot), name: template.name });
+        return toast({
+          context: error.name,
+          description: error.message,
+        });
+      setTypebot({
+        ...(data as Typebot),
+        name: template.name,
+        workspaceId: workspace.id,
+      });
     },
-    [showToast],
+    [workspace?.id],
   );
 
   useEffect(() => {
@@ -65,7 +74,7 @@ export const TemplatesModal = ({
 
   const onUseThisTemplateClick = async () => {
     if (!typebot) return;
-    onTypebotChoose(typebot);
+    onTypebotChoose(typebot, selectedTemplate.name);
   };
 
   return (
@@ -90,12 +99,7 @@ export const TemplatesModal = ({
           >
             <Stack spacing={5}>
               <Stack spacing={2}>
-                <Text
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  pl="1"
-                  color="gray.500"
-                >
+                <Text fontSize="xs" fontWeight="medium" pl="1" color="gray.500">
                   {t("templates.modal.menuHeading.marketing")}
                 </Text>
                 {templates
@@ -126,12 +130,7 @@ export const TemplatesModal = ({
                   ))}
               </Stack>
               <Stack spacing={2}>
-                <Text
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  pl="1"
-                  color="gray.500"
-                >
+                <Text fontSize="xs" fontWeight="medium" pl="1" color="gray.500">
                   {t("templates.modal.menuHeading.product")}
                 </Text>
                 {templates
@@ -162,12 +161,7 @@ export const TemplatesModal = ({
                   ))}
               </Stack>
               <Stack spacing={2}>
-                <Text
-                  fontSize="xs"
-                  fontWeight="semibold"
-                  pl="1"
-                  color="gray.500"
-                >
+                <Text fontSize="xs" fontWeight="medium" pl="1" color="gray.500">
                   {t("templates.modal.menuHeading.other")}
                 </Text>
                 {templates
@@ -233,7 +227,7 @@ export const TemplatesModal = ({
                 <Text>{selectedTemplate.description}</Text>
               </Stack>
               <Button
-                colorScheme="blue"
+                colorScheme="orange"
                 onClick={onUseThisTemplateClick}
                 isLoading={isLoading}
               >

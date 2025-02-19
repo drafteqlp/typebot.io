@@ -1,5 +1,6 @@
 import { ChevronLeftIcon, PlusIcon, TrashIcon } from "@/components/icons";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -16,12 +17,19 @@ import { useTranslate } from "@tolgee/react";
 import type { Credentials } from "@typebot.io/credentials/schemas";
 import type React from "react";
 import { useCallback, useState } from "react";
-import { useToast } from "../../../hooks/useToast";
 
 type Props = Omit<ButtonProps, "type"> & {
   type: Credentials["type"];
-  workspaceId: string;
-  currentCredentialsId?: string;
+  scope:
+    | {
+        type: "workspace";
+        workspaceId: string;
+      }
+    | {
+        type: "user";
+        userId: string;
+      };
+  currentCredentialsId: string | undefined;
   onCredentialsSelect: (credentialId?: string) => void;
   onCreateNewClick: () => void;
   defaultCredentialLabel?: string;
@@ -29,29 +37,36 @@ type Props = Omit<ButtonProps, "type"> & {
 };
 
 export const CredentialsDropdown = ({
-  type,
-  workspaceId,
   currentCredentialsId,
   onCredentialsSelect,
   onCreateNewClick,
   defaultCredentialLabel,
   credentialsName,
+  type,
+  scope,
   ...props
 }: Props) => {
   const { t } = useTranslate();
-  const { showToast } = useToast();
-  const { currentRole } = useWorkspace();
-  const { data, refetch } = trpc.credentials.listCredentials.useQuery({
-    workspaceId,
-    type,
-  });
+  const { currentUserMode } = useWorkspace();
+  const { data, refetch } = trpc.credentials.listCredentials.useQuery(
+    scope.type === "workspace"
+      ? {
+          scope: "workspace",
+          workspaceId: scope.workspaceId,
+          type: type,
+        }
+      : {
+          scope: "user",
+          type,
+        },
+  );
   const [isDeleting, setIsDeleting] = useState<string>();
   const { mutate } = trpc.credentials.deleteCredentials.useMutation({
     onMutate: ({ credentialsId }) => {
       setIsDeleting(credentialsId);
     },
     onError: (error) => {
-      showToast({
+      toast({
         description: error.message,
       });
     },
@@ -82,7 +97,13 @@ export const CredentialsDropdown = ({
   const deleteCredentials =
     (credentialsId: string) => async (e: React.MouseEvent) => {
       e.stopPropagation();
-      mutate({ workspaceId, credentialsId });
+      if (scope.type === "workspace")
+        mutate({
+          scope: "workspace",
+          workspaceId: scope.workspaceId,
+          credentialsId,
+        });
+      else mutate({ scope: "user", credentialsId });
     };
 
   if (data?.credentials.length === 0 && !defaultCredentialLabel) {
@@ -92,7 +113,7 @@ export const CredentialsDropdown = ({
         textAlign="left"
         leftIcon={<PlusIcon />}
         onClick={onCreateNewClick}
-        isDisabled={currentRole === "GUEST"}
+        isDisabled={currentUserMode === "guest"}
         {...props}
       >
         {t("add")} {credentialsName}
@@ -153,7 +174,7 @@ export const CredentialsDropdown = ({
               />
             </MenuItem>
           ))}
-          {currentRole === "GUEST" ? null : (
+          {currentUserMode === "guest" ? null : (
             <MenuItem
               maxW="500px"
               overflow="hidden"

@@ -1,7 +1,7 @@
 import { TextInput } from "@/components/inputs";
 import { Select } from "@/components/inputs/Select";
 import { useParentModal } from "@/features/graph/providers/ParentModalProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -26,7 +26,6 @@ export type PreCheckoutModalProps = {
     | {
         plan: "STARTER" | "PRO";
         workspaceId: string;
-        currency: "eur" | "usd";
       }
     | undefined;
   existingCompany?: string;
@@ -52,11 +51,10 @@ export const PreCheckoutModal = ({
   const { ref } = useParentModal();
   const vatValueInputRef = React.useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { showToast } = useToast();
   const { mutate: createCheckoutSession, isLoading: isCreatingCheckout } =
     trpc.billing.createCheckoutSession.useMutation({
       onError: (error) => {
-        showToast({
+        toast({
           description: error.message,
         });
       },

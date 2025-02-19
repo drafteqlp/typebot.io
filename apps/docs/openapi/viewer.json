@@ -59,7 +59,8 @@
                                     "3": "#/components/schemas/typebotV5",
                                     "4": "#/components/schemas/typebotV5",
                                     "5": "#/components/schemas/typebotV5",
-                                    "6": "#/components/schemas/typebotV6"
+                                    "6": "#/components/schemas/typebotV6",
+                                    "6.1": "#/components/schemas/typebotV6"
                                   }
                                 }
                               },
@@ -145,10 +146,14 @@
                         "description": {
                           "type": "string"
                         },
-                        "details": {}
+                        "details": {
+                          "type": "string"
+                        },
+                        "context": {
+                          "type": "string"
+                        }
                       },
                       "required": [
-                        "status",
                         "description"
                       ]
                     },
@@ -185,33 +190,33 @@
                           {
                             "oneOf": [
                               {
-                                "$ref": "#/components/schemas/textMessage"
+                                "$ref": "#/components/schemas/textBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/imageMessage"
+                                "$ref": "#/components/schemas/imageBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/videoMessage"
+                                "$ref": "#/components/schemas/videoBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/audioMessage"
+                                "$ref": "#/components/schemas/audioBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/embedMessage"
+                                "$ref": "#/components/schemas/embedBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/customEmbedMessage"
+                                "$ref": "#/components/schemas/customEmbedBubble"
                               }
                             ],
                             "discriminator": {
                               "propertyName": "type",
                               "mapping": {
-                                "text": "#/components/schemas/textMessage",
-                                "image": "#/components/schemas/imageMessage",
-                                "video": "#/components/schemas/videoMessage",
-                                "audio": "#/components/schemas/audioMessage",
-                                "embed": "#/components/schemas/embedMessage",
-                                "custom-embed": "#/components/schemas/customEmbedMessage"
+                                "text": "#/components/schemas/textBubble",
+                                "image": "#/components/schemas/imageBubble",
+                                "video": "#/components/schemas/videoBubble",
+                                "audio": "#/components/schemas/audioBubble",
+                                "embed": "#/components/schemas/embedBubble",
+                                "custom-embed": "#/components/schemas/customEmbedBubble"
                               }
                             }
                           }
@@ -243,6 +248,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -267,6 +275,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "choice input": "#/components/schemas/buttonsInputV5",
@@ -296,6 +305,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -320,6 +332,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "choice input": "#/components/schemas/buttonsInput",
@@ -470,6 +483,9 @@
                         },
                         "guestAvatarUrl": {
                           "type": "string"
+                        },
+                        "backgroundUrl": {
+                          "type": "string"
                         }
                       }
                     },
@@ -484,10 +500,14 @@
                           "description": {
                             "type": "string"
                           },
-                          "details": {}
+                          "details": {
+                            "type": "string"
+                          },
+                          "context": {
+                            "type": "string"
+                          }
                         },
                         "required": [
-                          "status",
                           "description"
                         ]
                       }
@@ -573,7 +593,8 @@
                                     "3": "#/components/schemas/typebotV5",
                                     "4": "#/components/schemas/typebotV5",
                                     "5": "#/components/schemas/typebotV5",
-                                    "6": "#/components/schemas/typebotV6"
+                                    "6": "#/components/schemas/typebotV6",
+                                    "6.1": "#/components/schemas/typebotV6"
                                   }
                                 }
                               },
@@ -659,10 +680,14 @@
                         "description": {
                           "type": "string"
                         },
-                        "details": {}
+                        "details": {
+                          "type": "string"
+                        },
+                        "context": {
+                          "type": "string"
+                        }
                       },
                       "required": [
-                        "status",
                         "description"
                       ]
                     },
@@ -699,33 +724,33 @@
                           {
                             "oneOf": [
                               {
-                                "$ref": "#/components/schemas/textMessage"
+                                "$ref": "#/components/schemas/textBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/imageMessage"
+                                "$ref": "#/components/schemas/imageBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/videoMessage"
+                                "$ref": "#/components/schemas/videoBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/audioMessage"
+                                "$ref": "#/components/schemas/audioBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/embedMessage"
+                                "$ref": "#/components/schemas/embedBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/customEmbedMessage"
+                                "$ref": "#/components/schemas/customEmbedBubble"
                               }
                             ],
                             "discriminator": {
                               "propertyName": "type",
                               "mapping": {
-                                "text": "#/components/schemas/textMessage",
-                                "image": "#/components/schemas/imageMessage",
-                                "video": "#/components/schemas/videoMessage",
-                                "audio": "#/components/schemas/audioMessage",
-                                "embed": "#/components/schemas/embedMessage",
-                                "custom-embed": "#/components/schemas/customEmbedMessage"
+                                "text": "#/components/schemas/textBubble",
+                                "image": "#/components/schemas/imageBubble",
+                                "video": "#/components/schemas/videoBubble",
+                                "audio": "#/components/schemas/audioBubble",
+                                "embed": "#/components/schemas/embedBubble",
+                                "custom-embed": "#/components/schemas/customEmbedBubble"
                               }
                             }
                           }
@@ -757,6 +782,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -781,6 +809,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "choice input": "#/components/schemas/buttonsInputV5",
@@ -810,6 +839,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -834,6 +866,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "choice input": "#/components/schemas/buttonsInput",
@@ -984,6 +1017,9 @@
                         },
                         "guestAvatarUrl": {
                           "type": "string"
+                        },
+                        "backgroundUrl": {
+                          "type": "string"
                         }
                       }
                     },
@@ -998,10 +1034,14 @@
                           "description": {
                             "type": "string"
                           },
-                          "details": {}
+                          "details": {
+                            "type": "string"
+                          },
+                          "context": {
+                            "type": "string"
+                          }
                         },
                         "required": [
-                          "status",
                           "description"
                         ]
                       }
@@ -1067,17 +1107,21 @@
                   "message": {
                     "oneOf": [
                       {
-                        "$ref": "#/components/schemas/textSentMessage"
+                        "$ref": "#/components/schemas/textMessage"
                       },
                       {
-                        "$ref": "#/components/schemas/audioSentMessage"
+                        "$ref": "#/components/schemas/audioMessage"
+                      },
+                      {
+                        "$ref": "#/components/schemas/commandMessage"
                       }
                     ],
                     "discriminator": {
                       "propertyName": "type",
                       "mapping": {
-                        "text": "#/components/schemas/textSentMessage",
-                        "audio": "#/components/schemas/audioSentMessage"
+                        "text": "#/components/schemas/textMessage",
+                        "audio": "#/components/schemas/audioMessage",
+                        "command": "#/components/schemas/commandMessage"
                       }
                     },
                     "description": "Only provide it if your flow starts with an input block and you'd like to directly provide an answer to it."
@@ -1139,6 +1183,25 @@
                         "id": {
                           "type": "string"
                         },
+                        "version": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "3",
+                                "4",
+                                "5"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "6",
+                                "6.1"
+                              ]
+                            }
+                          ]
+                        },
                         "theme": {
                           "$ref": "#/components/schemas/theme"
                         },
@@ -1151,6 +1214,7 @@
                       },
                       "required": [
                         "id",
+                        "version",
                         "theme",
                         "settings"
                       ]
@@ -1177,33 +1241,33 @@
                           {
                             "oneOf": [
                               {
-                                "$ref": "#/components/schemas/textMessage"
+                                "$ref": "#/components/schemas/textBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/imageMessage"
+                                "$ref": "#/components/schemas/imageBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/videoMessage"
+                                "$ref": "#/components/schemas/videoBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/audioMessage"
+                                "$ref": "#/components/schemas/audioBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/embedMessage"
+                                "$ref": "#/components/schemas/embedBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/customEmbedMessage"
+                                "$ref": "#/components/schemas/customEmbedBubble"
                               }
                             ],
                             "discriminator": {
                               "propertyName": "type",
                               "mapping": {
-                                "text": "#/components/schemas/textMessage",
-                                "image": "#/components/schemas/imageMessage",
-                                "video": "#/components/schemas/videoMessage",
-                                "audio": "#/components/schemas/audioMessage",
-                                "embed": "#/components/schemas/embedMessage",
-                                "custom-embed": "#/components/schemas/customEmbedMessage"
+                                "text": "#/components/schemas/textBubble",
+                                "image": "#/components/schemas/imageBubble",
+                                "video": "#/components/schemas/videoBubble",
+                                "audio": "#/components/schemas/audioBubble",
+                                "embed": "#/components/schemas/embedBubble",
+                                "custom-embed": "#/components/schemas/customEmbedBubble"
                               }
                             }
                           }
@@ -1238,6 +1302,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -1260,6 +1327,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "file input": "#/components/schemas/fileInput",
@@ -1395,10 +1463,14 @@
                           "description": {
                             "type": "string"
                           },
-                          "details": {}
+                          "details": {
+                            "type": "string"
+                          },
+                          "context": {
+                            "type": "string"
+                          }
                         },
                         "required": [
-                          "status",
                           "description"
                         ]
                       },
@@ -1411,6 +1483,9 @@
                           "type": "string"
                         },
                         "guestAvatarUrl": {
+                          "type": "string"
+                        },
+                        "backgroundUrl": {
                           "type": "string"
                         }
                       },
@@ -1479,17 +1554,21 @@
                   "message": {
                     "oneOf": [
                       {
-                        "$ref": "#/components/schemas/textSentMessage"
+                        "$ref": "#/components/schemas/textMessage"
                       },
                       {
-                        "$ref": "#/components/schemas/audioSentMessage"
+                        "$ref": "#/components/schemas/audioMessage"
+                      },
+                      {
+                        "$ref": "#/components/schemas/commandMessage"
                       }
                     ],
                     "discriminator": {
                       "propertyName": "type",
                       "mapping": {
-                        "text": "#/components/schemas/textSentMessage",
-                        "audio": "#/components/schemas/audioSentMessage"
+                        "text": "#/components/schemas/textMessage",
+                        "audio": "#/components/schemas/audioMessage",
+                        "command": "#/components/schemas/commandMessage"
                       }
                     }
                   },
@@ -1536,33 +1615,33 @@
                           {
                             "oneOf": [
                               {
-                                "$ref": "#/components/schemas/textMessage"
+                                "$ref": "#/components/schemas/textBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/imageMessage"
+                                "$ref": "#/components/schemas/imageBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/videoMessage"
+                                "$ref": "#/components/schemas/videoBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/audioMessage"
+                                "$ref": "#/components/schemas/audioBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/embedMessage"
+                                "$ref": "#/components/schemas/embedBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/customEmbedMessage"
+                                "$ref": "#/components/schemas/customEmbedBubble"
                               }
                             ],
                             "discriminator": {
                               "propertyName": "type",
                               "mapping": {
-                                "text": "#/components/schemas/textMessage",
-                                "image": "#/components/schemas/imageMessage",
-                                "video": "#/components/schemas/videoMessage",
-                                "audio": "#/components/schemas/audioMessage",
-                                "embed": "#/components/schemas/embedMessage",
-                                "custom-embed": "#/components/schemas/customEmbedMessage"
+                                "text": "#/components/schemas/textBubble",
+                                "image": "#/components/schemas/imageBubble",
+                                "video": "#/components/schemas/videoBubble",
+                                "audio": "#/components/schemas/audioBubble",
+                                "embed": "#/components/schemas/embedBubble",
+                                "custom-embed": "#/components/schemas/customEmbedBubble"
                               }
                             }
                           }
@@ -1597,6 +1676,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -1619,6 +1701,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "file input": "#/components/schemas/fileInput",
@@ -1754,10 +1837,14 @@
                           "description": {
                             "type": "string"
                           },
-                          "details": {}
+                          "details": {
+                            "type": "string"
+                          },
+                          "context": {
+                            "type": "string"
+                          }
                         },
                         "required": [
-                          "status",
                           "description"
                         ]
                       },
@@ -1770,6 +1857,9 @@
                           "type": "string"
                         },
                         "guestAvatarUrl": {
+                          "type": "string"
+                        },
+                        "backgroundUrl": {
                           "type": "string"
                         }
                       },
@@ -1841,17 +1931,21 @@
                   "message": {
                     "oneOf": [
                       {
-                        "$ref": "#/components/schemas/textSentMessage"
+                        "$ref": "#/components/schemas/textMessage"
                       },
                       {
-                        "$ref": "#/components/schemas/audioSentMessage"
+                        "$ref": "#/components/schemas/audioMessage"
+                      },
+                      {
+                        "$ref": "#/components/schemas/commandMessage"
                       }
                     ],
                     "discriminator": {
                       "propertyName": "type",
                       "mapping": {
-                        "text": "#/components/schemas/textSentMessage",
-                        "audio": "#/components/schemas/audioSentMessage"
+                        "text": "#/components/schemas/textMessage",
+                        "audio": "#/components/schemas/audioMessage",
+                        "command": "#/components/schemas/commandMessage"
                       }
                     }
                   },
@@ -1875,7 +1969,8 @@
                         "3": "#/components/schemas/typebotV5",
                         "4": "#/components/schemas/typebotV5",
                         "5": "#/components/schemas/typebotV5",
-                        "6": "#/components/schemas/typebotV6"
+                        "6": "#/components/schemas/typebotV6",
+                        "6.1": "#/components/schemas/typebotV6"
                       }
                     },
                     "description": "If set, it will override the typebot that is used to start the chat."
@@ -1964,6 +2059,25 @@
                         "id": {
                           "type": "string"
                         },
+                        "version": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "3",
+                                "4",
+                                "5"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "6",
+                                "6.1"
+                              ]
+                            }
+                          ]
+                        },
                         "theme": {
                           "$ref": "#/components/schemas/theme"
                         },
@@ -1976,6 +2090,7 @@
                       },
                       "required": [
                         "id",
+                        "version",
                         "theme",
                         "settings"
                       ]
@@ -2002,33 +2117,33 @@
                           {
                             "oneOf": [
                               {
-                                "$ref": "#/components/schemas/textMessage"
+                                "$ref": "#/components/schemas/textBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/imageMessage"
+                                "$ref": "#/components/schemas/imageBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/videoMessage"
+                                "$ref": "#/components/schemas/videoBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/audioMessage"
+                                "$ref": "#/components/schemas/audioBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/embedMessage"
+                                "$ref": "#/components/schemas/embedBubble"
                               },
                               {
-                                "$ref": "#/components/schemas/customEmbedMessage"
+                                "$ref": "#/components/schemas/customEmbedBubble"
                               }
                             ],
                             "discriminator": {
                               "propertyName": "type",
                               "mapping": {
-                                "text": "#/components/schemas/textMessage",
-                                "image": "#/components/schemas/imageMessage",
-                                "video": "#/components/schemas/videoMessage",
-                                "audio": "#/components/schemas/audioMessage",
-                                "embed": "#/components/schemas/embedMessage",
-                                "custom-embed": "#/components/schemas/customEmbedMessage"
+                                "text": "#/components/schemas/textBubble",
+                                "image": "#/components/schemas/imageBubble",
+                                "video": "#/components/schemas/videoBubble",
+                                "audio": "#/components/schemas/audioBubble",
+                                "embed": "#/components/schemas/embedBubble",
+                                "custom-embed": "#/components/schemas/customEmbedBubble"
                               }
                             }
                           }
@@ -2063,6 +2178,9 @@
                                   "$ref": "#/components/schemas/dateInput"
                                 },
                                 {
+                                  "$ref": "#/components/schemas/time"
+                                },
+                                {
                                   "$ref": "#/components/schemas/paymentInput"
                                 },
                                 {
@@ -2085,6 +2203,7 @@
                                   "url input": "#/components/schemas/url",
                                   "phone number input": "#/components/schemas/phoneNumberInput",
                                   "date input": "#/components/schemas/dateInput",
+                                  "time input": "#/components/schemas/time",
                                   "payment input": "#/components/schemas/paymentInput",
                                   "rating input": "#/components/schemas/rating",
                                   "file input": "#/components/schemas/fileInput",
@@ -2220,10 +2339,14 @@
                           "description": {
                             "type": "string"
                           },
-                          "details": {}
+                          "details": {
+                            "type": "string"
+                          },
+                          "context": {
+                            "type": "string"
+                          }
                         },
                         "required": [
-                          "status",
                           "description"
                         ]
                       },
@@ -2236,6 +2359,9 @@
                           "type": "string"
                         },
                         "guestAvatarUrl": {
+                          "type": "string"
+                        },
+                        "backgroundUrl": {
                           "type": "string"
                         }
                       },
@@ -2494,7 +2620,7 @@
     },
     "/v2/generate-upload-url": {
       "post": {
-        "operationId": "generateUploadUrl",
+        "operationId": "generateUploadUrlV2",
         "summary": "Generate upload URL",
         "description": "Used to upload anything from the client to S3 bucket",
         "requestBody": {
@@ -2516,6 +2642,91 @@
                 },
                 "required": [
                   "sessionId",
+                  "fileName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "presignedUrl": {
+                      "type": "string"
+                    },
+                    "formData": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "fileUrl": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "presignedUrl",
+                    "formData",
+                    "fileUrl"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.BAD_REQUEST"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error.INTERNAL_SERVER_ERROR"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v3/generate-upload-url": {
+      "post": {
+        "operationId": "generateUploadUrl",
+        "summary": "Generate upload URL",
+        "description": "Used to upload anything from the client to S3 bucket",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  },
+                  "blockId": {
+                    "type": "string"
+                  },
+                  "fileName": {
+                    "type": "string"
+                  },
+                  "fileType": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sessionId",
+                  "blockId",
                   "fileName"
                 ]
               }
@@ -2854,6 +3065,20 @@
                                             "from": {
                                               "type": "string"
                                             },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
+                                            },
                                             "type": {
                                               "type": "string",
                                               "enum": [
@@ -2870,16 +3095,13 @@
                                               "required": [
                                                 "body"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "text",
-                                            "timestamp"
+                                            "text"
                                           ]
                                         },
                                         {
@@ -2887,6 +3109,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -2908,16 +3144,13 @@
                                                 "text",
                                                 "payload"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "button",
-                                            "timestamp"
+                                            "button"
                                           ]
                                         },
                                         {
@@ -2925,6 +3158,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -2933,37 +3180,75 @@
                                               ]
                                             },
                                             "interactive": {
-                                              "type": "object",
-                                              "properties": {
-                                                "button_reply": {
+                                              "oneOf": [
+                                                {
                                                   "type": "object",
                                                   "properties": {
-                                                    "id": {
-                                                      "type": "string"
+                                                    "type": {
+                                                      "type": "string",
+                                                      "enum": [
+                                                        "button_reply"
+                                                      ]
                                                     },
-                                                    "title": {
-                                                      "type": "string"
+                                                    "button_reply": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "id": {
+                                                          "type": "string"
+                                                        },
+                                                        "title": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "id",
+                                                        "title"
+                                                      ]
                                                     }
                                                   },
                                                   "required": [
-                                                    "id",
-                                                    "title"
+                                                    "type",
+                                                    "button_reply"
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "object",
+                                                  "properties": {
+                                                    "type": {
+                                                      "type": "string",
+                                                      "enum": [
+                                                        "list_reply"
+                                                      ]
+                                                    },
+                                                    "list_reply": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "id": {
+                                                          "type": "string"
+                                                        },
+                                                        "title": {
+                                                          "type": "string"
+                                                        }
+                                                      },
+                                                      "required": [
+                                                        "id",
+                                                        "title"
+                                                      ]
+                                                    }
+                                                  },
+                                                  "required": [
+                                                    "type",
+                                                    "list_reply"
                                                   ]
                                                 }
-                                              },
-                                              "required": [
-                                                "button_reply"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "interactive",
-                                            "timestamp"
+                                            "interactive"
                                           ]
                                         },
                                         {
@@ -2971,6 +3256,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -2991,16 +3290,13 @@
                                               "required": [
                                                 "id"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "image",
-                                            "timestamp"
+                                            "image"
                                           ]
                                         },
                                         {
@@ -3008,6 +3304,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -3028,16 +3338,13 @@
                                               "required": [
                                                 "id"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "video",
-                                            "timestamp"
+                                            "video"
                                           ]
                                         },
                                         {
@@ -3045,6 +3352,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -3062,16 +3383,13 @@
                                               "required": [
                                                 "id"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "audio",
-                                            "timestamp"
+                                            "audio"
                                           ]
                                         },
                                         {
@@ -3079,6 +3397,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -3099,16 +3431,13 @@
                                               "required": [
                                                 "id"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "document",
-                                            "timestamp"
+                                            "document"
                                           ]
                                         },
                                         {
@@ -3116,6 +3445,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -3137,16 +3480,13 @@
                                                 "latitude",
                                                 "longitude"
                                               ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "location",
-                                            "timestamp"
+                                            "location"
                                           ]
                                         },
                                         {
@@ -3154,6 +3494,20 @@
                                           "properties": {
                                             "from": {
                                               "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
                                             },
                                             "type": {
                                               "type": "string",
@@ -3167,20 +3521,89 @@
                                                 "data": {
                                                   "type": "string"
                                                 }
-                                              },
-                                              "required": [
-                                                "data"
-                                              ]
-                                            },
-                                            "timestamp": {
-                                              "type": "string"
+                                              }
                                             }
                                           },
                                           "required": [
                                             "from",
+                                            "timestamp",
                                             "type",
-                                            "webhook",
-                                            "timestamp"
+                                            "webhook"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "from": {
+                                              "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "enum": [
+                                                "reaction"
+                                              ]
+                                            },
+                                            "reaction": {
+                                              "type": "object",
+                                              "properties": {
+                                                "emoji": {
+                                                  "type": "string"
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "required": [
+                                            "from",
+                                            "timestamp",
+                                            "type",
+                                            "reaction"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "from": {
+                                              "type": "string"
+                                            },
+                                            "timestamp": {
+                                              "type": "string"
+                                            },
+                                            "referral": {
+                                              "type": "object",
+                                              "properties": {
+                                                "ctwa_clid": {
+                                                  "type": "string"
+                                                },
+                                                "source_id": {
+                                                  "type": "string"
+                                                }
+                                              }
+                                            },
+                                            "type": {
+                                              "type": "string",
+                                              "enum": [
+                                                "unsupported"
+                                              ]
+                                            }
+                                          },
+                                          "required": [
+                                            "from",
+                                            "timestamp",
+                                            "type"
                                           ]
                                         }
                                       ]
@@ -3329,10 +3752,14 @@
                         "description": {
                           "type": "string"
                         },
-                        "details": {}
+                        "details": {
+                          "type": "string"
+                        },
+                        "context": {
+                          "type": "string"
+                        }
                       },
                       "required": [
-                        "status",
                         "description"
                       ]
                     }
@@ -3402,7 +3829,8 @@
           "version": {
             "type": "string",
             "enum": [
-              "6"
+              "6",
+              "6.1"
             ]
           },
           "id": {
@@ -3416,12 +3844,92 @@
           },
           "events": {
             "type": "array",
-            "maxItems": 1,
-            "minItems": 1,
             "items": {
               "oneOf": [
                 {
-                  "$ref": "#/components/schemas/event"
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "outgoingEdgeId": {
+                      "type": "string"
+                    },
+                    "graphCoordinates": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "start"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "graphCoordinates",
+                    "type"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "outgoingEdgeId": {
+                      "type": "string"
+                    },
+                    "graphCoordinates": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ]
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "command"
+                      ]
+                    },
+                    "options": {
+                      "type": "object",
+                      "properties": {
+                        "command": {
+                          "type": "string"
+                        },
+                        "resumeAfter": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "graphCoordinates",
+                    "type"
+                  ]
                 }
               ]
             }
@@ -3529,6 +4037,9 @@
           },
           "updatedAt": {
             "type": "string"
+          },
+          "workspaceId": {
+            "type": "string"
           }
         },
         "required": [
@@ -3540,7 +4051,8 @@
           "variables",
           "settings",
           "theme",
-          "updatedAt"
+          "updatedAt",
+          "workspaceId"
         ],
         "title": "Typebot V6"
       },
@@ -3647,6 +4159,9 @@
                       "$ref": "#/components/schemas/dateInput"
                     },
                     {
+                      "$ref": "#/components/schemas/time"
+                    },
+                    {
                       "$ref": "#/components/schemas/paymentInput"
                     },
                     {
@@ -3671,6 +4186,7 @@
                       "url input": "#/components/schemas/url",
                       "phone number input": "#/components/schemas/phoneNumberInput",
                       "date input": "#/components/schemas/dateInput",
+                      "time input": "#/components/schemas/time",
                       "payment input": "#/components/schemas/paymentInput",
                       "rating input": "#/components/schemas/rating",
                       "choice input": "#/components/schemas/buttonsInput",
@@ -4179,6 +4695,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/zendeskBlock"
+                    },
+                    {
+                      "$ref": "#/components/schemas/posthogBlock"
                     }
                   ],
                   "discriminator": {
@@ -4197,7 +4716,8 @@
                       "nocodb": "#/components/schemas/nocodbBlock",
                       "segment": "#/components/schemas/segmentBlock",
                       "groq": "#/components/schemas/groqBlock",
-                      "zendesk": "#/components/schemas/zendeskBlock"
+                      "zendesk": "#/components/schemas/zendeskBlock",
+                      "posthog": "#/components/schemas/posthogBlock"
                     }
                   }
                 }
@@ -4766,7 +5286,8 @@
                 "type": "boolean"
               },
               "format": {
-                "type": "string"
+                "type": "string",
+                "description": "Format of the string is based on Unicode Technical Standard #35"
               },
               "min": {
                 "type": "string"
@@ -4782,6 +5303,48 @@
           "type"
         ],
         "title": "Date"
+      },
+      "time": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "outgoingEdgeId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "time input"
+            ]
+          },
+          "options": {
+            "type": "object",
+            "properties": {
+              "variableId": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "object",
+                "properties": {
+                  "button": {
+                    "type": "string"
+                  }
+                }
+              },
+              "format": {
+                "type": "string",
+                "description": "Format of the string is based on Unicode Technical Standard #35"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "Time"
       },
       "paymentInput": {
         "type": "object",
@@ -5031,7 +5594,9 @@
                                   "Contains",
                                   "Does not contain",
                                   "Greater than",
+                                  "Greater or equal to",
                                   "Less than",
+                                  "Less or equal to",
                                   "Is set",
                                   "Is empty",
                                   "Starts with",
@@ -5079,6 +5644,9 @@
               },
               "searchInputPlaceholder": {
                 "type": "string"
+              },
+              "areInitialSearchButtonsVisible": {
+                "type": "boolean"
               }
             }
           }
@@ -5232,7 +5800,9 @@
                                   "Contains",
                                   "Does not contain",
                                   "Greater than",
+                                  "Greater or equal to",
                                   "Less than",
+                                  "Less or equal to",
                                   "Is set",
                                   "Is empty",
                                   "Starts with",
@@ -5408,6 +5978,9 @@
                   },
                   "isCode": {
                     "type": "boolean"
+                  },
+                  "saveErrorInVariableId": {
+                    "type": "string"
                   }
                 }
               },
@@ -5457,7 +6030,9 @@
                       "Random ID",
                       "Phone number",
                       "Contact name",
-                      "Transcript"
+                      "Transcript",
+                      "Referral Click ID",
+                      "Referral Source ID"
                     ]
                   }
                 },
@@ -5485,6 +6060,9 @@
                   },
                   "isCode": {
                     "type": "boolean"
+                  },
+                  "saveErrorInVariableId": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -5738,7 +6316,9 @@
                               "Contains",
                               "Does not contain",
                               "Greater than",
+                              "Greater or equal to",
                               "Less than",
+                              "Less or equal to",
                               "Is set",
                               "Is empty",
                               "Starts with",
@@ -6286,7 +6866,9 @@
                                 "Contains",
                                 "Does not contain",
                                 "Greater than",
+                                "Greater or equal to",
                                 "Less than",
+                                "Less or equal to",
                                 "Is set",
                                 "Is empty",
                                 "Starts with",
@@ -6450,7 +7032,9 @@
                                 "Contains",
                                 "Does not contain",
                                 "Greater than",
+                                "Greater or equal to",
                                 "Less than",
+                                "Less or equal to",
                                 "Is set",
                                 "Is empty",
                                 "Starts with",
@@ -7176,6 +7760,9 @@
                         }
                       }
                     }
+                  },
+                  "additionalInstructions": {
+                    "type": "string"
                   },
                   "responseMapping": {
                     "type": "array",
@@ -8006,6 +8593,14 @@
                       ]
                     }
                   },
+                  "temperature": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {}
+                    ]
+                  },
                   "responseMapping": {
                     "type": "array",
                     "items": {
@@ -8014,7 +8609,8 @@
                         "item": {
                           "type": "string",
                           "enum": [
-                            "Message content"
+                            "Message content",
+                            "Total tokens"
                           ]
                         },
                         "variableId": {
@@ -8522,7 +9118,7 @@
                         "item": {
                           "type": "string",
                           "enum": [
-                            "Message Content"
+                            "Message content"
                           ]
                         },
                         "variableId": {
@@ -10086,7 +10682,7 @@
         ],
         "title": "Zendesk"
       },
-      "event": {
+      "posthogBlock": {
         "type": "object",
         "properties": {
           "id": {
@@ -10095,34 +10691,138 @@
           "outgoingEdgeId": {
             "type": "string"
           },
-          "graphCoordinates": {
-            "type": "object",
-            "properties": {
-              "x": {
-                "type": "number"
-              },
-              "y": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "x",
-              "y"
-            ]
-          },
           "type": {
             "type": "string",
             "enum": [
-              "start"
+              "posthog"
+            ]
+          },
+          "options": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "credentialsId": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "credentialsId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "Capture"
+                    ]
+                  },
+                  "isAnonymous": {
+                    "type": "boolean"
+                  },
+                  "distinctId": {
+                    "type": "string"
+                  },
+                  "event": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "personProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string"
+                        },
+                        "key": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "credentialsId": {
+                    "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "Identify Group"
+                    ]
+                  },
+                  "distinctId": {
+                    "type": "string"
+                  },
+                  "groupType": {
+                    "type": "string"
+                  },
+                  "groupKey": {
+                    "type": "string"
+                  },
+                  "properties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
             ]
           }
         },
         "required": [
           "id",
-          "graphCoordinates",
           "type"
         ],
-        "description": "Event"
+        "title": "Posthog"
       },
       "settings": {
         "type": "object",
@@ -10157,6 +10857,32 @@
                       "session",
                       "local"
                     ]
+                  }
+                }
+              },
+              "systemMessages": {
+                "type": "object",
+                "properties": {
+                  "invalidMessage": {
+                    "type": "string"
+                  },
+                  "botClosed": {
+                    "type": "string"
+                  },
+                  "popupBlockedDescription": {
+                    "type": "string"
+                  },
+                  "popupBlockedButtonLabel": {
+                    "type": "string"
+                  },
+                  "fileUploadError": {
+                    "type": "string"
+                  },
+                  "fileUploadSizeError": {
+                    "type": "string"
+                  },
+                  "whatsAppPictureChoiceSelectLabel": {
+                    "type": "string"
                   }
                 }
               }
@@ -10239,7 +10965,9 @@
                             "Contains",
                             "Does not contain",
                             "Greater than",
+                            "Greater or equal to",
                             "Less than",
+                            "Less or equal to",
                             "Is set",
                             "Is empty",
                             "Starts with",
@@ -10732,6 +11460,18 @@
                   "large"
                 ],
                 "description": "Deprecated, use `container.border.roundeness` instead"
+              },
+              "buttonsInput": {
+                "type": "object",
+                "properties": {
+                  "layout": {
+                    "type": "string",
+                    "enum": [
+                      "wrap",
+                      "vertical"
+                    ]
+                  }
+                }
               }
             }
           },
@@ -10860,6 +11600,9 @@
                             "$ref": "#/components/schemas/dateInput"
                           },
                           {
+                            "$ref": "#/components/schemas/time"
+                          },
+                          {
                             "$ref": "#/components/schemas/paymentInput"
                           },
                           {
@@ -10884,6 +11627,7 @@
                             "url input": "#/components/schemas/url",
                             "phone number input": "#/components/schemas/phoneNumberInput",
                             "date input": "#/components/schemas/dateInput",
+                            "time input": "#/components/schemas/time",
                             "payment input": "#/components/schemas/paymentInput",
                             "rating input": "#/components/schemas/rating",
                             "choice input": "#/components/schemas/buttonsInputV5",
@@ -10970,7 +11714,9 @@
                                                   "Contains",
                                                   "Does not contain",
                                                   "Greater than",
+                                                  "Greater or equal to",
                                                   "Less than",
+                                                  "Less or equal to",
                                                   "Is set",
                                                   "Is empty",
                                                   "Starts with",
@@ -11482,7 +12228,9 @@
                                                     "Contains",
                                                     "Does not contain",
                                                     "Greater than",
+                                                    "Greater or equal to",
                                                     "Less than",
+                                                    "Less or equal to",
                                                     "Is set",
                                                     "Is empty",
                                                     "Starts with",
@@ -11663,7 +12411,9 @@
                                                     "Contains",
                                                     "Does not contain",
                                                     "Greater than",
+                                                    "Greater or equal to",
                                                     "Less than",
+                                                    "Less or equal to",
                                                     "Is set",
                                                     "Is empty",
                                                     "Starts with",
@@ -12454,6 +13204,9 @@
           },
           "updatedAt": {
             "type": "string"
+          },
+          "workspaceId": {
+            "type": "string"
           }
         },
         "required": [
@@ -12465,7 +13218,8 @@
           "variables",
           "settings",
           "theme",
-          "updatedAt"
+          "updatedAt",
+          "workspaceId"
         ],
         "title": "Typebot V5"
       },
@@ -12536,7 +13290,9 @@
                                   "Contains",
                                   "Does not contain",
                                   "Greater than",
+                                  "Greater or equal to",
                                   "Less than",
+                                  "Less or equal to",
                                   "Is set",
                                   "Is empty",
                                   "Starts with",
@@ -12584,6 +13340,9 @@
               },
               "searchInputPlaceholder": {
                 "type": "string"
+              },
+              "areInitialSearchButtonsVisible": {
+                "type": "boolean"
               }
             }
           }
@@ -12743,7 +13502,9 @@
                                   "Contains",
                                   "Does not contain",
                                   "Greater than",
+                                  "Greater or equal to",
                                   "Less than",
+                                  "Less or equal to",
                                   "Is set",
                                   "Is empty",
                                   "Starts with",
@@ -12816,7 +13577,7 @@
         ],
         "title": "Picture choice v5"
       },
-      "textMessage": {
+      "textBubble": {
         "type": "object",
         "properties": {
           "type": {
@@ -12869,7 +13630,7 @@
         ],
         "title": "Text"
       },
-      "imageMessage": {
+      "imageBubble": {
         "type": "object",
         "properties": {
           "type": {
@@ -12904,7 +13665,7 @@
         ],
         "title": "Image"
       },
-      "videoMessage": {
+      "videoBubble": {
         "type": "object",
         "properties": {
           "type": {
@@ -12964,7 +13725,7 @@
         ],
         "title": "Video"
       },
-      "audioMessage": {
+      "audioBubble": {
         "type": "object",
         "properties": {
           "type": {
@@ -12991,7 +13752,7 @@
         ],
         "title": "Audio"
       },
-      "embedMessage": {
+      "embedBubble": {
         "type": "object",
         "properties": {
           "type": {
@@ -13032,7 +13793,7 @@
         ],
         "title": "Embed"
       },
-      "customEmbedMessage": {
+      "customEmbedBubble": {
         "type": "object",
         "properties": {
           "type": {
@@ -13929,7 +14690,7 @@
           "issues": []
         }
       },
-      "textSentMessage": {
+      "textMessage": {
         "type": "object",
         "properties": {
           "type": {
@@ -13955,7 +14716,7 @@
         ],
         "title": "Text"
       },
-      "audioSentMessage": {
+      "audioMessage": {
         "type": "object",
         "properties": {
           "type": {
@@ -13972,8 +14733,27 @@
           "type",
           "url"
         ],
-        "description": "Can only be provided if current input block is a text input that allows audio clips",
+        "description": "Can only be provided if current input block is a text input block that allows audio clips",
         "title": "Audio"
+      },
+      "commandMessage": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "command"
+            ]
+          },
+          "command": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "command"
+        ],
+        "title": "Command"
       },
       "error.NOT_FOUND": {
         "type": "object",

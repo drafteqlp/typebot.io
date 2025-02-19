@@ -32,7 +32,7 @@ configureRuntimeEnv();
 const landingPagePaths = [
   "/",
   "/pricing",
-  "/privacy-policies",
+  "/privacy-policy",
   "/terms-of-service",
   "/about",
   "/oss-friends",
@@ -40,19 +40,7 @@ const landingPagePaths = [
   "/blog/:slug*",
 ];
 
-const landingPageReferers = [
-  "/",
-  "/pricing",
-  "/privacy-policies",
-  "/terms-of-service",
-  "/about",
-  "/oss-friends",
-  "/blog",
-].concat(["/blog/(.+)"]);
-
 const currentHost = "typebot.io";
-const currentOrigin = `https://${currentHost}`;
-const optionalQueryParams = `(\\/?\\?.*)?`;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -65,6 +53,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: join(__dirname, "../../"),
     serverComponentsExternalPackages: ["isolated-vm"],
+    instrumentationHook: true,
   },
   webpack: (config, { isServer }) => {
     if (isServer) return config;
@@ -86,69 +75,39 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: (process.env.LANDING_PAGE_URL
-        ? landingPageReferers
-            .map((path) => ({
-              source: "/_next/static/:static*",
+        ? [
+            {
+              source: "/_build/assets/:asset*",
+              destination: `${process.env.LANDING_PAGE_URL}/_build/assets/:asset*`,
+            },
+            {
+              source: "/blog-assets/:asset*",
+              destination: `${process.env.LANDING_PAGE_URL}/blog-assets/:asset*`,
+            },
+            {
+              source: "/_server/:server*",
+              destination: `${process.env.LANDING_PAGE_URL}/_server/:server*`,
+            },
+            {
+              source: "/fonts/:font*",
+              destination: `${process.env.LANDING_PAGE_URL}/fonts/:font*`,
+            },
+            {
+              source: "/images/:image*",
+              destination: `${process.env.LANDING_PAGE_URL}/images/:image*`,
+            },
+          ].concat(
+            landingPagePaths.map((path) => ({
+              source: path,
               has: [
                 {
-                  type: "header",
-                  key: "referer",
-                  value: `${currentOrigin}${path}${optionalQueryParams}`,
+                  type: "host",
+                  value: currentHost,
                 },
               ],
-              destination: `${process.env.LANDING_PAGE_URL}/_next/static/:static*`,
-            }))
-            .concat(
-              landingPageReferers.map((path) => ({
-                source: "/typebots/:typebot*",
-                has: [
-                  {
-                    type: "header",
-                    key: "referer",
-                    value: `${currentOrigin}${path}${optionalQueryParams}`,
-                  },
-                ],
-                destination: `${process.env.LANDING_PAGE_URL}/typebots/:typebot*`,
-              })),
-            )
-            .concat(
-              landingPageReferers.map((path) => ({
-                source: "/styles/:style*",
-                has: [
-                  {
-                    type: "header",
-                    key: "referer",
-                    value: `${currentOrigin}${path}${optionalQueryParams}`,
-                  },
-                ],
-                destination: `${process.env.LANDING_PAGE_URL}/styles/:style*`,
-              })),
-            )
-            .concat(
-              landingPagePaths.map((path) => ({
-                source: path,
-                has: [
-                  {
-                    type: "host",
-                    value: currentHost,
-                  },
-                ],
-                destination: `${process.env.LANDING_PAGE_URL}${path}`,
-              })),
-            )
-            .concat(
-              landingPageReferers.map((path) => ({
-                source: "/images/:image*",
-                has: [
-                  {
-                    type: "header",
-                    key: "referer",
-                    value: `${currentOrigin}${path}${optionalQueryParams}`,
-                  },
-                ],
-                destination: `${process.env.LANDING_PAGE_URL}/images/:image*`,
-              })),
-            )
+              destination: `${process.env.LANDING_PAGE_URL}${path}`,
+            })),
+          )
         : []
       )
         .concat([
@@ -205,12 +164,9 @@ const nextConfig = {
 
 export default process.env.SENTRY_DSN
   ? withSentryConfig(nextConfig, {
-      release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA + "-viewer",
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,
-      silent: true,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
       widenClientFileUpload: true,
-      hideSourceMaps: true,
-      disableLogger: true,
     })
   : nextConfig;

@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 
 export type VariableStore = {
   get: (variableId: string) => string | (string | null)[] | null | undefined;
-  set: (variableId: string, value: unknown) => void;
+  set: (variables: { id: string; value: unknown }[]) => void;
   parse: (value: string) => string;
   list: () => {
     id: string;
@@ -13,7 +13,7 @@ export type VariableStore = {
 };
 
 export type AsyncVariableStore = Omit<VariableStore, "set"> & {
-  set: (variableId: string, value: unknown) => Promise<void>;
+  set: (variables: { id: string; value: unknown }[]) => Promise<void>;
 };
 
 export type LogsStore = {
@@ -21,9 +21,10 @@ export type LogsStore = {
     log:
       | string
       | {
-          status: "error" | "success" | "info";
+          status?: "error" | "success" | "info";
           description: string;
-          details?: unknown;
+          details?: string;
+          context?: string;
         },
   ) => void;
 };
@@ -47,10 +48,23 @@ export type ActionDefinition<
   Options extends z.ZodObject<z.ZodRawShape> = z.ZodObject<{}>,
 > = {
   name: string;
+  parseBlockNodeLabel?: (
+    options: z.infer<BaseOptions> & z.infer<Options>,
+  ) => string;
   fetchers?: FetcherDefinition<A, z.infer<BaseOptions> & z.infer<Options>>[];
   options?: Options;
   turnableInto?: TurnableIntoParam<z.infer<Options>>[];
   getSetVariableIds?: (options: z.infer<Options>) => string[];
+  /**
+   * Used for AI generation in the builder if enabled by the user.
+   */
+  aiGenerate?: {
+    fetcherId: string;
+    getModel: (params: {
+      credentials: CredentialsFromAuthDef<A>;
+      model: string;
+    }) => any;
+  };
   run?: {
     server?: (params: {
       credentials: CredentialsFromAuthDef<A>;
@@ -69,7 +83,11 @@ export type ActionDefinition<
         variables: AsyncVariableStore;
       }) => Promise<{
         stream?: ReadableStream<any>;
-        httpError?: { status: number; message: string };
+        error?: {
+          description: string;
+          details?: string;
+          context?: string;
+        };
       }>;
     };
     web?: {
@@ -120,7 +138,23 @@ export type FetcherDefinition<A extends AuthDefinition, T = {}> = {
   fetch: (params: {
     credentials: CredentialsFromAuthDef<A> | undefined;
     options: T;
-  }) => Promise<(string | { label: string; value: string })[]>;
+  }) => Promise<{
+    data?: (string | { label: string; value: string })[];
+    error?: {
+      /**
+       * Context of the error. i.e. "Fetching models", "Creating chat completion"
+       */
+      context?: string;
+      /**
+       * Description of the error. i.e. "No API key provided", "No model provided"
+       */
+      description: string;
+      /**
+       * Details of the error, is often a JSON stringified object.
+       */
+      details?: string;
+    };
+  }>;
 };
 
 export type AuthDefinition = {

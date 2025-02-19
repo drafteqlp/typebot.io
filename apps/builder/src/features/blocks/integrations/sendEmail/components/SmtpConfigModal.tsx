@@ -1,6 +1,6 @@
-import { useUser } from "@/features/account/hooks/useUser";
+import { useUser } from "@/features/user/hooks/useUser";
 import { useWorkspace } from "@/features/workspace/WorkspaceProvider";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/lib/toast";
 import { trpc } from "@/lib/trpc";
 import {
   Button,
@@ -12,7 +12,7 @@ import {
   ModalHeader,
   ModalOverlay,
 } from "@chakra-ui/react";
-import type { SmtpCredentials } from "@typebot.io/blocks-integrations/sendEmail/schema";
+import type { SmtpCredentials } from "@typebot.io/credentials/schemas";
 import { isNotDefined } from "@typebot.io/lib/utils";
 import type React from "react";
 import { useState } from "react";
@@ -49,7 +49,6 @@ export const SmtpCreateModalContent = ({
   const { user } = useUser();
   const { workspace } = useWorkspace();
   const [isCreating, setIsCreating] = useState(false);
-  const { showToast } = useToast();
   const [smtpConfig, setSmtpConfig] = useState<SmtpCredentials["data"]>({
     from: {},
     port: 25,
@@ -62,9 +61,8 @@ export const SmtpCreateModalContent = ({
   const { mutate } = trpc.credentials.createCredentials.useMutation({
     onSettled: () => setIsCreating(false),
     onError: (err) => {
-      showToast({
+      toast({
         description: err.message,
-        status: "error",
       });
     },
     onSuccess: (data) => {
@@ -84,16 +82,12 @@ export const SmtpCreateModalContent = ({
     if (testSmtpError) {
       console.error(testSmtpError);
       setIsCreating(false);
-      showToast({
-        title: "Invalid configuration",
+      toast({
         description: "We couldn't send the test email with your configuration",
-        details: {
-          content:
-            "response" in testSmtpError
-              ? (testSmtpError.response as string)
-              : testSmtpError.message,
-          lang: "json",
-        },
+        details:
+          "response" in testSmtpError
+            ? (testSmtpError.response as string)
+            : testSmtpError.message,
       });
       return;
     }
@@ -102,8 +96,9 @@ export const SmtpCreateModalContent = ({
         data: smtpConfig,
         name: smtpConfig.from.email as string,
         type: "smtp",
-        workspaceId: workspace.id,
       },
+      scope: "workspace",
+      workspaceId: workspace.id,
     });
   };
   return (
@@ -118,7 +113,7 @@ export const SmtpCreateModalContent = ({
         <ModalFooter>
           <Button
             type="submit"
-            colorScheme="blue"
+            colorScheme="orange"
             isDisabled={
               isNotDefined(smtpConfig.from.email) ||
               isNotDefined(smtpConfig.host) ||
