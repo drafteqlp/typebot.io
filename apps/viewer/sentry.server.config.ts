@@ -10,6 +10,7 @@ const ignoreTrpcMessages = [
   "current block does not expect file upload",
   "couldn't find credentials in database",
   "start group doesn't exist",
+  "origin not allowed",
 ];
 
 const ignoreMessages = [
@@ -18,12 +19,21 @@ const ignoreMessages = [
   "point to another phone ID",
 ];
 
+const crawlersToIgnore = ["Googlebot"];
+
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV,
   tracesSampleRate: 1,
   beforeSend: (event, hint) => {
     const exception = hint.originalException;
+    const userAgent = event.contexts?.browser?.name;
+    if (
+      userAgent &&
+      typeof userAgent === "string" &&
+      crawlersToIgnore.some((crawler) => userAgent.includes(crawler))
+    )
+      return null;
     if (
       typeof exception === "string" &&
       ignoreMessages.some((message) =>

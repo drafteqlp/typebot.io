@@ -1,3 +1,5 @@
+import type { SessionStore } from "@typebot.io/runtime-session-store";
+import type { WithoutVariables } from "@typebot.io/variables/types";
 import type { z } from "@typebot.io/zod";
 import type { SVGProps } from "react";
 
@@ -49,7 +51,7 @@ export type ActionDefinition<
 > = {
   name: string;
   parseBlockNodeLabel?: (
-    options: z.infer<BaseOptions> & z.infer<Options>,
+    options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>,
   ) => string;
   fetchers?: FetcherDefinition<A, z.infer<BaseOptions> & z.infer<Options>>[];
   options?: Options;
@@ -68,19 +70,23 @@ export type ActionDefinition<
   run?: {
     server?: (params: {
       credentials: CredentialsFromAuthDef<A>;
-      options: z.infer<BaseOptions> & z.infer<Options>;
+      options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>;
       variables: VariableStore;
       logs: LogsStore;
+      sessionStore: SessionStore;
     }) => Promise<void> | void;
     /**
      * Used to stream a text bubble. Will only be used if the block following the integration block is a text bubble containing the variable returned by `getStreamVariableId`.
      */
     stream?: {
-      getStreamVariableId: (options: z.infer<Options>) => string | undefined;
+      getStreamVariableId: (
+        options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>,
+      ) => string | undefined;
       run: (params: {
         credentials: CredentialsFromAuthDef<A>;
-        options: z.infer<BaseOptions> & z.infer<Options>;
+        options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>;
         variables: AsyncVariableStore;
+        sessionStore: SessionStore;
       }) => Promise<{
         stream?: ReadableStream<any>;
         error?: {
@@ -97,31 +103,31 @@ export type ActionDefinition<
          */
         parseUrl: (params: {
           credentials: CredentialsFromAuthDef<A>;
-          options: z.infer<BaseOptions> & z.infer<Options>;
+          options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>;
           variables: VariableStore;
           logs: LogsStore;
         }) => string | undefined;
         waitForEvent?: {
           getSaveVariableId?: (
-            options: z.infer<BaseOptions> & z.infer<Options>,
+            options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>,
           ) => string | undefined;
           parseFunction: (params: {
             credentials: CredentialsFromAuthDef<A>;
-            options: z.infer<BaseOptions> & z.infer<Options>;
+            options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>;
             variables: VariableStore;
             logs: LogsStore;
           }) => FunctionToExecute;
         };
         parseInitFunction: (params: {
           credentials: CredentialsFromAuthDef<A>;
-          options: z.infer<BaseOptions> & z.infer<Options>;
+          options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>;
           variables: VariableStore;
           logs: LogsStore;
         }) => FunctionToExecute;
       };
       parseFunction?: (params: {
         credentials: CredentialsFromAuthDef<A>;
-        options: z.infer<BaseOptions> & z.infer<Options>;
+        options: WithoutVariables<z.infer<BaseOptions> & z.infer<Options>>;
         variables: VariableStore;
         logs: LogsStore;
       }) => FunctionToExecute;

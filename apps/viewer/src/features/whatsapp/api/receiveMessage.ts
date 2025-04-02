@@ -59,10 +59,20 @@ export const receiveMessage = publicProcedure
       if (err instanceof WhatsAppError) {
         Sentry.captureMessage(err.message, err.details);
       } else {
-        console.error("sending unkown error to Sentry");
-        Sentry.captureException(err, {
-          data: await parseUnknownError({ err }),
+        console.log("Sending unknown error to Sentry");
+        const details = safeJsonParse(
+          (await parseUnknownError({ err })).details,
+        );
+        console.log("details", details);
+        Sentry.addBreadcrumb({
+          data:
+            typeof details === "object" && details
+              ? details
+              : {
+                  details,
+                },
         });
+        Sentry.captureException(err);
       }
     }
 
@@ -78,7 +88,7 @@ const extractMessageDetails = (entry: WhatsAppWebhookRequestBody["entry"]) => {
   const contactPhoneNumber =
     entry.at(0)?.changes.at(0)?.value?.messages?.at(0)?.from ?? "";
   const phoneNumberId = entry.at(0)?.changes.at(0)?.value
-    .metadata.phone_number_id;
+    .metadata?.phone_number_id;
   const referral = entry.at(0)?.changes.at(0)?.value.messages?.at(0)?.referral;
   return {
     receivedMessage,
@@ -87,4 +97,13 @@ const extractMessageDetails = (entry: WhatsAppWebhookRequestBody["entry"]) => {
     phoneNumberId,
     referral,
   };
+};
+
+const safeJsonParse = (value: string | undefined): unknown => {
+  if (!value) return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
 };

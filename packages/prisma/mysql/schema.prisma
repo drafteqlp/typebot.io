@@ -64,6 +64,7 @@ model User {
   displayedInAppNotifications Json?
   credentials                 UserCredentials[]
   groupTitlesAutoGeneration   Json?
+  preferredLanguage           String?                   @db.VarChar(10)
 }
 
 model ApiToken {
@@ -109,6 +110,9 @@ model Workspace {
   chatsHardLimit                Int?
   // TODO: remove
   settings                      Json?
+  lastActivityAt                DateTime?
+  inactiveFirstEmailSentAt      DateTime?
+  inactiveSecondEmailSentAt     DateTime?
 }
 
 model MemberInWorkspace {

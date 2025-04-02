@@ -132,19 +132,34 @@ export const incomingMessageSchema = z.discriminatedUnion("type", [
   }),
   sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("image"),
-    image: z.object({ id: z.string(), caption: z.string().optional() }),
+    image: z.object({
+      id: z.string(),
+      caption: z.string().optional(),
+      mime_type: z.string(),
+    }),
   }),
   sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("video"),
-    video: z.object({ id: z.string(), caption: z.string().optional() }),
+    video: z.object({
+      id: z.string(),
+      caption: z.string().optional(),
+      mime_type: z.string(),
+    }),
   }),
   sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("audio"),
-    audio: z.object({ id: z.string() }),
+    audio: z.object({
+      id: z.string(),
+      mime_type: z.string(),
+    }),
   }),
   sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("document"),
-    document: z.object({ id: z.string(), caption: z.string().optional() }),
+    document: z.object({
+      id: z.string(),
+      caption: z.string().optional(),
+      mime_type: z.string(),
+    }),
   }),
   sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("location"),
@@ -166,7 +181,38 @@ export const incomingMessageSchema = z.discriminatedUnion("type", [
     }),
   }),
   sharedIncomingMessageFieldsSchema.extend({
+    type: z.literal("sticker"),
+    sticker: z.object({
+      id: z.string(),
+      mime_type: z.string(),
+    }),
+  }),
+  sharedIncomingMessageFieldsSchema.extend({
+    type: z.literal("contacts"),
+    contacts: z.object({
+      name: z
+        .object({
+          formatted_name: z.string(),
+        })
+        .optional(),
+      phones: z
+        .array(
+          z.object({
+            phone: z.string().optional(),
+            type: z.string().optional(),
+          }),
+        )
+        .optional(),
+    }),
+  }),
+  sharedIncomingMessageFieldsSchema.extend({
     type: z.literal("unsupported"),
+  }),
+  sharedIncomingMessageFieldsSchema.extend({
+    type: z.literal("system"),
+    system: z.object({
+      body: z.string(),
+    }),
   }),
 ]);
 
@@ -187,9 +233,11 @@ export const whatsAppWebhookRequestBodySchema = z.object({
       changes: z.array(
         z.object({
           value: z.object({
-            metadata: z.object({
-              phone_number_id: z.string(),
-            }),
+            metadata: z
+              .object({
+                phone_number_id: z.string(),
+              })
+              .optional(),
             contacts: z
               .array(
                 z.object({
